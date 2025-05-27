@@ -1,0 +1,33 @@
+<h2>Bem-vindo, {{ usuario }}!</h2>
+
+<h3>Saldo atual: R$ {{ "%.2f"|format(saldo) }}</h3>
+
+<form method="POST">
+  <label>Tipo:</label>
+  <select name="tipo">
+    <option value="receita">Receita</option>
+    <option value="despesa">Despesa</option>
+  </select><br>
+
+  <label>Categoria:</label>
+  <input type="text" name="categoria" required><br>
+
+  <label>Valor:</label>
+  <input type="number" name="valor" step="0.01" required><br>
+
+  <label>Data:</label>
+  <input type="date" name="data"><br>
+
+  <button type="submit">Adicionar</button>
+</form>
+
+<hr>
+
+<h3>Movimentações:</h3>
+<ul>
+  {% for tipo, categoria, valor, data in movimentacoes %}
+    <li>{{ data }} - {{ tipo }} - {{ categoria }} - R$ {{ "%.2f"|format(valor) }}</li>
+  {% endfor %}
+</ul>
+
+<a href="/logout">Sair</a>

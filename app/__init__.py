@@ -1,6 +1,10 @@
 from flask import Flask
+from app import routes
 
-app = Flask(__name__)
-app.secret_key = 'movacash_supersegredo'
+def create_app():
+    app = Flask(__name__)
+    app.secret_key = 'chave-secreta'  # Pode usar qualquer texto
 
-from app import routes  # 👈 Isso é OBRIGATÓRIO!
+    app.register_blueprint(routes.routes)
+
+    return app
