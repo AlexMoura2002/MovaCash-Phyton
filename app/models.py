@@ -1,95 +1,33 @@
-import sqlite3
-from werkzeug.security import generate_password_hash, check_password_hash
+from app import db
 
-def criar_banco():
-    conexao = sqlite3.connect('movacash.db')
-    cursor = conexao.cursor()
+class Usuario(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    senha = db.Column(db.String(100), nullable=False)
 
-    # Tabela de usuários
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS usuarios (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nome TEXT NOT NULL,
-            email TEXT NOT NULL UNIQUE,
-            senha TEXT NOT NULL
-        )
-    ''')
+    def __repr__(self):
+        return f'<Usuario {self.email}>'
 
-    # Tabela de movimentações financeiras
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS movimentacoes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            usuario_email TEXT NOT NULL,
-            tipo TEXT NOT NULL,  -- 'receita' ou 'despesa'
-            categoria TEXT NOT NULL,
-            valor REAL NOT NULL,
-            data TEXT NOT NULL
-        )
-    ''')
+class Movimentacao(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    tipo = db.Column(db.String(10), nullable=False)  # receita ou despesa
+    categoria = db.Column(db.String(100), nullable=False)
+    valor = db.Column(db.Float, nullable=False)
+    data = db.Column(db.Date, nullable=False)
+    descricao = db.Column(db.Text)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
 
-    conexao.commit()
-    conexao.close()
+    def __repr__(self):
+        return f'<Movimentacao {self.tipo} - {self.valor}>'
 
-# Funções de usuário
-def verificar_login(email, senha):
-    conexao = sqlite3.connect('movacash.db')
-    cursor = conexao.cursor()
+class Conta(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    descricao = db.Column(db.String(200), nullable=False)
+    valor = db.Column(db.Float, nullable=False)
+    vencimento = db.Column(db.Date, nullable=False)
+    status = db.Column(db.String(20), nullable=False)  # 'pago' ou 'pendente'
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
 
-    cursor.execute("SELECT senha FROM usuarios WHERE email = ?", (email,))
-    resultado = cursor.fetchone()
-    conexao.close()
-
-    if resultado:
-        senha_armazenada = resultado[0]
-        return check_password_hash(senha_armazenada, senha)
-    return False
-
-def verificar_usuario_existente(email):
-    conexao = sqlite3.connect('movacash.db')
-    cursor = conexao.cursor()
-
-    cursor.execute("SELECT * FROM usuarios WHERE email = ?", (email,))
-    usuario = cursor.fetchone()
-    conexao.close()
-
-    return usuario is not None
-
-def criar_usuario(nome, email, senha):
-    senha_criptografada = generate_password_hash(senha)
-    conexao = sqlite3.connect('movacash.db')
-    cursor = conexao.cursor()
-
-    cursor.execute("INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)",
-                   (nome, email, senha_criptografada))
-
-    conexao.commit()
-    conexao.close()
-
-# Função para registrar movimentação
-def adicionar_movimentacao(usuario_email, tipo, categoria, valor, data):
-    conexao = sqlite3.connect('movacash.db')
-    cursor = conexao.cursor()
-
-    cursor.execute('''
-        INSERT INTO movimentacoes (usuario_email, tipo, categoria, valor, data)
-        VALUES (?, ?, ?, ?, ?)
-    ''', (usuario_email, tipo, categoria, valor, data))
-
-    conexao.commit()
-    conexao.close()
-
-# Buscar movimentações
-def obter_movimentacoes(usuario_email):
-    conexao = sqlite3.connect('movacash.db')
-    cursor = conexao.cursor()
-
-    cursor.execute('''
-        SELECT tipo, categoria, valor, data
-        FROM movimentacoes
-        WHERE usuario_email = ?
-        ORDER BY data DESC
-    ''', (usuario_email,))
-
-    movimentacoes = cursor.fetchall()
-    conexao.close()
-    return movimentacoes
+    def __repr__(self):
+        return f'<Conta {self.descricao} - {self.status}>'

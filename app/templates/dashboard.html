@@ -1,33 +1,68 @@
-<h2>Bem-vindo, {{ usuario }}!</h2>
+{% extends "base.html" %}
 
-<h3>Saldo atual: R$ {{ "%.2f"|format(saldo) }}</h3>
+{% block title %}Dashboard - Movacash{% endblock %}
 
-<form method="POST">
-  <label>Tipo:</label>
-  <select name="tipo">
-    <option value="receita">Receita</option>
-    <option value="despesa">Despesa</option>
-  </select><br>
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Bem-vindo, {{ usuario }}!</h2>
 
-  <label>Categoria:</label>
-  <input type="text" name="categoria" required><br>
+    <div class="card mb-4">
+        <div class="card-body">
+            <h4 class="card-title">Saldo atual: R$ {{ "%.2f"|format(saldo) }}</h4>
+        </div>
+    </div>
 
-  <label>Valor:</label>
-  <input type="number" name="valor" step="0.01" required><br>
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Adicionar Movimentação</h5>
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label">Tipo:</label>
+                    <select name="tipo" class="form-select" required>
+                        <option value="receita">Receita</option>
+                        <option value="despesa">Despesa</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Categoria:</label>
+                    <input type="text" name="categoria" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Valor:</label>
+                    <input type="number" name="valor" step="0.01" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Data:</label>
+                    <input type="date" name="data" class="form-control">
+                </div>
+                <button type="submit" class="btn btn-success">Adicionar</button>
+            </form>
+        </div>
+    </div>
 
-  <label>Data:</label>
-  <input type="date" name="data"><br>
-
-  <button type="submit">Adicionar</button>
-</form>
-
-<hr>
-
-<h3>Movimentações:</h3>
-<ul>
-  {% for tipo, categoria, valor, data in movimentacoes %}
-    <li>{{ data }} - {{ tipo }} - {{ categoria }} - R$ {{ "%.2f"|format(valor) }}</li>
-  {% endfor %}
-</ul>
-
-<a href="/logout">Sair</a>
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Movimentações</h5>
+            {% if movimentacoes %}
+                <ul class="list-group">
+                    {% for tipo, categoria, valor, data, id in movimentacoes %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ data }} - {{ tipo }} - {{ categoria }} - R$ {{ "%.2f"|format(valor) }}
+                            <span>
+                                <a href="{{ url_for('editar_movimentacao', id=id) }}" class="btn btn-sm btn-warning">Editar</a>
+                                <a href="{{ url_for('excluir_movimentacao', id=id) }}"
+                                   class="btn btn-sm btn-danger"
+                                   onclick="return confirm('Tem certeza que deseja excluir esta movimentação?');">
+                                   Excluir
+                                </a>
+                            </span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted">Nenhuma movimentação registrada ainda.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

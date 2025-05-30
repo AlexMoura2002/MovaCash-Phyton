@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Conta - Movacash{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Editar Conta</h2>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label">Descrição:</label>
+                <input type="text" name="descricao" class="form-control" value="{{ conta.descricao }}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Valor:</label>
+                <input type="number" name="valor" step="0.01" class="form-control" value="{{ conta.valor }}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Data de Vencimento:</label>
+                <input type="date" name="vencimento" class="form-control" value="{{ conta.vencimento }}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Status:</label>
+                <select name="status" class="form-select" required>
+                    <option value="pendente" {% if conta.status == 'pendente' %}selected{% endif %}>Pendente</option>
+                    <option value="pago" {% if conta.status == 'pago' %}selected{% endif %}>Pago</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+            <a href="{{ url_for('contas') }}" class="btn btn-secondary">Cancelar</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

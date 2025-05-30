@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Movimentação</title>
+</head>
+<body>
+    <h2>Editar Movimentação</h2>
+
+    <form method="POST">
+        <label>Tipo:</label>
+        <select name="tipo">
+            <option value="receita" {% if m.tipo == 'receita' %}selected{% endif %}>Receita</option>
+            <option value="despesa" {% if m.tipo == 'despesa' %}selected{% endif %}>Despesa</option>
+        </select><br>
+
+        <label>Categoria:</label>
+        <input type="text" name="categoria" value="{{ m.categoria }}" required><br>
+
+        <label>Valor:</label>
+        <input type="number" name="valor" step="0.01" value="{{ m.valor }}" required><br>
+
+        <label>Data:</label>
+        <input type="date" name="data" value="{{ m.data }}"><br>
+
+        <button type="submit">Salvar</button>
+    </form>
+
+    <p><a href="{{ url_for('dashboard') }}">Voltar</a></p>
+</body>
+</html>

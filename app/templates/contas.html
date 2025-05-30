@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Contas a Pagar e Receber - Movacash{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Contas a Pagar e Receber</h2>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Cadastrar Nova Conta</h5>
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label">Descrição:</label>
+                <input type="text" name="descricao" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Valor:</label>
+                <input type="number" name="valor" step="0.01" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Data de Vencimento:</label>
+                <input type="date" name="vencimento" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Status:</label>
+                <select name="status" class="form-select" required>
+                    <option value="pendente">Pendente</option>
+                    <option value="pago">Pago</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-success">Cadastrar Conta</button>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Lista de Contas</h5>
+
+        {% if contas %}
+            <ul class="list-group">
+                {% for conta in contas %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            {{ conta.vencimento }} - {{ conta.descricao }} - R$ {{ "%.2f"|format(conta.valor) }} - <strong>{{ conta.status|capitalize }}</strong>
+                        </div>
+                        <div>
+                            <a href="{{ url_for('editar_conta', id=conta.id) }}" class="btn btn-sm btn-warning">Editar</a>
+                            <a href="{{ url_for('excluir_conta', id=conta.id) }}"
+                               class="btn btn-sm btn-danger"
+                               onclick="return confirm('Tem certeza que deseja excluir esta conta?');">
+                               Excluir
+                            </a>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-muted">Nenhuma conta cadastrada.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

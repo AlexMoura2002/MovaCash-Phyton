@@ -1,10 +1,19 @@
 from flask import Flask
-from app import routes
+from flask_sqlalchemy import SQLAlchemy
+from flask import session
+
+db = SQLAlchemy()
 
 def create_app():
     app = Flask(__name__)
-    app.secret_key = 'chave-secreta'  # Pode usar qualquer texto
+    app.config['SECRET_KEY'] = 'chave-secreta'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///movacash.db'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-    app.register_blueprint(routes.routes)
+    db.init_app(app)
+
+    with app.app_context():
+        from . import routes, models
+        db.create_all()
 
     return app
