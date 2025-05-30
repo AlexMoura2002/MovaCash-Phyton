@@ -37,44 +37,68 @@
             <h5>Total por Categoria - Receitas</h5>
             <table class="table table-bordered table-sm">
                 <thead>
-                    <tr>
-                        <th>Categoria</th>
-                        <th>Total (R$)</th>
-                    </tr>
+                    <tr><th>Categoria</th><th>Total (R$)</th></tr>
                 </thead>
                 <tbody>
                     {% for cat, total in receitas %}
-                        <tr>
-                            <td>{{ cat }}</td>
-                            <td>{{ "%.2f"|format(total) }}</td>
-                        </tr>
+                        <tr><td>{{ cat }}</td><td>{{ "%.2f"|format(total) }}</td></tr>
                     {% else %}
                         <tr><td colspan="2">Nenhuma receita encontrada.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
+            <canvas id="graficoReceitas" height="200"></canvas>
         </div>
+
         <div class="col-md-6">
             <h5>Total por Categoria - Despesas</h5>
             <table class="table table-bordered table-sm">
                 <thead>
-                    <tr>
-                        <th>Categoria</th>
-                        <th>Total (R$)</th>
-                    </tr>
+                    <tr><th>Categoria</th><th>Total (R$)</th></tr>
                 </thead>
                 <tbody>
                     {% for cat, total in despesas %}
-                        <tr>
-                            <td>{{ cat }}</td>
-                            <td>{{ "%.2f"|format(total) }}</td>
-                        </tr>
+                        <tr><td>{{ cat }}</td><td>{{ "%.2f"|format(total) }}</td></tr>
                     {% else %}
                         <tr><td colspan="2">Nenhuma despesa encontrada.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
+            <canvas id="graficoDespesas" height="200"></canvas>
         </div>
     </div>
 </div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const receitas = {{ receitas_json | safe }};
+    const despesas = {{ despesas_json | safe }};
+
+    const receitasLabels = receitas.map(item => item[0]);
+    const receitasData = receitas.map(item => item[1]);
+
+    const despesasLabels = despesas.map(item => item[0]);
+    const despesasData = despesas.map(item => item[1]);
+
+    new Chart(document.getElementById('graficoReceitas'), {
+        type: 'pie',
+        data: {
+            labels: receitasLabels,
+            datasets: [{
+                data: receitasData,
+            }]
+        }
+    });
+
+    new Chart(document.getElementById('graficoDespesas'), {
+        type: 'pie',
+        data: {
+            labels: despesasLabels,
+            datasets: [{
+                data: despesasData,
+            }]
+        }
+    });
+</script>
 {% endblock %}

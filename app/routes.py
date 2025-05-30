@@ -140,7 +140,11 @@ def relatorios():
         .filter(db.extract('year', Movimentacao.data) == ano)\
         .group_by(Movimentacao.categoria).all()
 
-    return render_template('relatorios.html', receitas=receitas, despesas=despesas, mes=mes, ano=ano)
+    receitas_json = pd.DataFrame(receitas, columns=["Categoria", "Total"]).to_json(orient='values') if receitas else []
+    despesas_json = pd.DataFrame(despesas, columns=["Categoria", "Total"]).to_json(orient='values') if despesas else []
+
+    return render_template('relatorios.html', receitas=receitas, despesas=despesas, mes=mes, ano=ano,
+                           receitas_json=receitas_json, despesas_json=despesas_json)
 
 @bp.route('/exportar-excel')
 @login_obrigatorio
