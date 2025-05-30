@@ -1,3 +1,7 @@
-flask
-flask_sqlalchemy
-flask_bcrypt
+Flask==2.3.3
+Flask-SQLAlchemy==3.1.1
+pandas==2.2.2
+openpyxl==3.1.2
+xhtml2pdf==0.2.8
+XlsxWriter
+WeasyPrint

@@ -45,8 +45,8 @@
                             {{ conta.vencimento }} - {{ conta.descricao }} - R$ {{ "%.2f"|format(conta.valor) }} - <strong>{{ conta.status|capitalize }}</strong>
                         </div>
                         <div>
-                            <a href="{{ url_for('editar_conta', id=conta.id) }}" class="btn btn-sm btn-warning">Editar</a>
-                            <a href="{{ url_for('excluir_conta', id=conta.id) }}"
+                            <a href="{{ url_for('main.editar_conta', id=conta.id) }}" class="btn btn-sm btn-warning">Editar</a>
+                            <a href="{{ url_for('main.excluir_conta', id=conta.id) }}"
                                class="btn btn-sm btn-danger"
                                onclick="return confirm('Tem certeza que deseja excluir esta conta?');">
                                Excluir

@@ -1,31 +1,35 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>Editar Movimentação</title>
-</head>
-<body>
-    <h2>Editar Movimentação</h2>
+{% extends "base.html" %}
 
-    <form method="POST">
-        <label>Tipo:</label>
-        <select name="tipo">
-            <option value="receita" {% if m.tipo == 'receita' %}selected{% endif %}>Receita</option>
-            <option value="despesa" {% if m.tipo == 'despesa' %}selected{% endif %}>Despesa</option>
-        </select><br>
+{% block title %}Editar Movimentação - Movacash{% endblock %}
 
-        <label>Categoria:</label>
-        <input type="text" name="categoria" value="{{ m.categoria }}" required><br>
+{% block content %}
+<h2 class="mb-4">Editar Movimentação</h2>
 
-        <label>Valor:</label>
-        <input type="number" name="valor" step="0.01" value="{{ m.valor }}" required><br>
-
-        <label>Data:</label>
-        <input type="date" name="data" value="{{ m.data }}"><br>
-
-        <button type="submit">Salvar</button>
-    </form>
-
-    <p><a href="{{ url_for('dashboard') }}">Voltar</a></p>
-</body>
-</html>
+<div class="card">
+    <div class="card-body">
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label">Tipo:</label>
+                <select name="tipo" class="form-select" required>
+                    <option value="receita" {% if m.tipo == 'receita' %}selected{% endif %}>Receita</option>
+                    <option value="despesa" {% if m.tipo == 'despesa' %}selected{% endif %}>Despesa</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Categoria:</label>
+                <input type="text" name="categoria" class="form-control" value="{{ m.categoria }}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Valor:</label>
+                <input type="number" name="valor" step="0.01" class="form-control" value="{{ m.valor }}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Data:</label>
+                <input type="date" name="data" class="form-control" value="{{ m.data }}">
+            </div>
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">Cancelar</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
