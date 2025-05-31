@@ -5,6 +5,7 @@ from .utils import login_obrigatorio
 from datetime import datetime, date
 import pandas as pd
 from io import BytesIO
+from sqlalchemy.orm import joinedload
 
 bp = Blueprint('main', __name__)
 
@@ -90,7 +91,7 @@ def perfil():
 @login_obrigatorio
 def dashboard():
     usuario_id = session['usuario_id']
-    usuario = Usuario.query.get(usuario_id).nome
+    usuario = Usuario.query.get(usuario_id)
 
     if request.method == 'POST':
         tipo = request.form['tipo']
@@ -103,16 +104,39 @@ def dashboard():
         db.session.add(nova)
         db.session.commit()
 
-    movimentacoes = Movimentacao.query.filter_by(usuario_id=usuario_id).order_by(Movimentacao.data.desc()).all()
-    saldo = sum(m.valor if m.tipo == 'receita' else -m.valor for m in movimentacoes)
-    mov_list = [(m.tipo, m.categoria, m.valor, m.data, m.id) for m in movimentacoes]
+    if usuario.tipo == 'admin':
+        movimentacoes = db.session.query(Movimentacao).options(joinedload(Movimentacao.usuario)).order_by(Movimentacao.data.desc()).all()
+    else:
+        movimentacoes = Movimentacao.query.filter_by(usuario_id=usuario_id).order_by(Movimentacao.data.desc()).all()
 
-    return render_template('dashboard.html', usuario=usuario, saldo=saldo, movimentacoes=mov_list)
+    saldo = sum(m.valor if m.tipo == 'receita' else -m.valor for m in movimentacoes)
+    mov_list = [
+        (m.tipo, m.categoria, m.valor, m.data, m.id, m.usuario.nome if usuario.tipo == 'admin' else None)
+        for m in movimentacoes
+    ]
+
+    return render_template('dashboard.html', usuario=usuario.nome, saldo=saldo, movimentacoes=mov_list)
 
 @bp.route('/caixa', methods=['GET', 'POST'])
 @login_obrigatorio
 def caixa():
+    usuario_id = session['usuario_id']
+
+    if request.method == 'POST':
+        tipo = request.form['tipo']
+        categoria = request.form['categoria']
+        valor = float(request.form['valor'])
+        data_str = request.form['data']
+        data = datetime.strptime(data_str, '%Y-%m-%d').date() if data_str else date.today()
+
+        nova = Movimentacao(tipo=tipo, categoria=categoria, valor=valor, data=data, usuario_id=usuario_id)
+        db.session.add(nova)
+        db.session.commit()
+        flash('Movimentação registrada com sucesso!', 'success')
+        return redirect(url_for('main.caixa'))
+
     return render_template('caixa.html')
+
 
 @bp.route('/excluir/<int:id>')
 @login_obrigatorio

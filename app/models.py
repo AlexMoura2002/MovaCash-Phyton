@@ -14,6 +14,7 @@ class Movimentacao(db.Model):
     valor = db.Column(db.Float, nullable=False)
     data = db.Column(db.Date, nullable=False)
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'))
+    usuario = db.relationship('Usuario', backref='movimentacoes')  # ← ESSA LINHA É ESSENCIAL
 
 class Conta(db.Model):
     id = db.Column(db.Integer, primary_key=True)

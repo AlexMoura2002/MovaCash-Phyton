@@ -1,24 +1,47 @@
 {% extends "base.html" %}
 
-{% block title %}Caixa{% endblock %}
+{% block title %}Caixa - Movacash{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-    <h3>Lançamento de Venda</h3>
-    <form method="POST">
-        <div class="mb-3">
-            <label>Nota Fiscal</label>
-            <input type="text" name="nota_fiscal" class="form-control" required>
+    <h2 class="mb-4">Registrar Venda / Despesa</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label">Tipo:</label>
+                    <select name="tipo" class="form-select" required>
+                        <option value="receita">Receita</option>
+                        <option value="despesa">Despesa</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Categoria:</label>
+                    <input type="text" name="categoria" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Valor:</label>
+                    <input type="number" name="valor" step="0.01" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Data:</label>
+                    <input type="date" name="data" class="form-control">
+                </div>
+                <button type="submit" class="btn btn-primary">Registrar</button>
+            </form>
         </div>
-        <div class="mb-3">
-            <label>Produto Vendido</label>
-            <input type="text" name="produto" class="form-control" required>
-        </div>
-        <div class="mb-3">
-            <label>Valor</label>
-            <input type="number" step="0.01" name="valor" class="form-control" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Registrar Venda</button>
-    </form>
+    </div>
 </div>
 {% endblock %}
