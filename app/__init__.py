@@ -14,4 +14,9 @@ def create_app():
     from .routes import bp as main_bp
     app.register_blueprint(main_bp)
 
+    # 🔧 Adicione esta parte abaixo para criar as tabelas no banco
+    with app.app_context():
+        from .models import Usuario  # importe seus modelos aqui
+        db.create_all()
+
     return app

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Caixa{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h3>Lançamento de Venda</h3>
+    <form method="POST">
+        <div class="mb-3">
+            <label>Nota Fiscal</label>
+            <input type="text" name="nota_fiscal" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label>Produto Vendido</label>
+            <input type="text" name="produto" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label>Valor</label>
+            <input type="number" step="0.01" name="valor" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Registrar Venda</button>
+    </form>
+</div>
+{% endblock %}

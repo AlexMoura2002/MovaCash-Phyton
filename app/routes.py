@@ -24,6 +24,7 @@ def login():
         return 'Credenciais inválidas'
     return render_template('login.html')
 
+
 @bp.route('/logout')
 def logout():
     session.clear()
