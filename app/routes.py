@@ -140,11 +140,21 @@ def relatorios():
         .filter(db.extract('year', Movimentacao.data) == ano)\
         .group_by(Movimentacao.categoria).all()
 
+    evolucao = db.session.query(
+        db.extract('month', Movimentacao.data).label('mes'),
+        db.func.sum(db.case((Movimentacao.tipo == 'receita', Movimentacao.valor), else_=0)).label('total_receitas'),
+        db.func.sum(db.case((Movimentacao.tipo == 'despesa', Movimentacao.valor), else_=0)).label('total_despesas')
+    ).filter_by(usuario_id=usuario_id)\
+     .filter(db.extract('year', Movimentacao.data) == ano)\
+     .group_by(db.extract('month', Movimentacao.data))\
+     .order_by(db.extract('month', Movimentacao.data)).all()
+
     receitas_json = pd.DataFrame(receitas, columns=["Categoria", "Total"]).to_json(orient='values') if receitas else []
     despesas_json = pd.DataFrame(despesas, columns=["Categoria", "Total"]).to_json(orient='values') if despesas else []
+    evolucao_json = pd.DataFrame(evolucao, columns=["mes", "total_receitas", "total_despesas"]).to_json(orient='records') if evolucao else []
 
     return render_template('relatorios.html', receitas=receitas, despesas=despesas, mes=mes, ano=ano,
-                           receitas_json=receitas_json, despesas_json=despesas_json)
+                           receitas_json=receitas_json, despesas_json=despesas_json, evolucao_json=evolucao_json)
 
 @bp.route('/exportar-excel')
 @login_obrigatorio
