@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, send_file
+from flask import Blueprint, render_template, request, redirect, url_for, session, send_file, flash
 from .models import Usuario, Movimentacao, Conta
 from . import db
 from .utils import login_obrigatorio
@@ -20,10 +20,14 @@ def login():
         usuario = Usuario.query.filter_by(email=email, senha=senha).first()
         if usuario:
             session['usuario_id'] = usuario.id
-            return redirect(url_for('main.dashboard'))
-        return 'Credenciais inválidas'
+            session['nome'] = usuario.nome
+            session['tipo'] = usuario.tipo
+            if usuario.tipo == 'admin':
+                return redirect(url_for('main.dashboard'))
+            else:
+                return redirect(url_for('main.caixa'))
+        flash('Credenciais inválidas', 'danger')
     return render_template('login.html')
-
 
 @bp.route('/logout')
 def logout():
@@ -36,11 +40,34 @@ def cadastro():
         nome = request.form['nome']
         email = request.form['email']
         senha = request.form['senha']
-        usuario = Usuario(nome=nome, email=email, senha=senha)
+        usuario = Usuario(nome=nome, email=email, senha=senha, tipo='vendedor')
         db.session.add(usuario)
         db.session.commit()
         return redirect(url_for('main.login'))
     return render_template('cadastro.html')
+
+@bp.route('/cadastrar-usuario', methods=['GET', 'POST'])
+@login_obrigatorio
+def cadastrar_usuario():
+    if session.get('tipo') != 'admin':
+        return redirect(url_for('main.dashboard'))
+
+    if request.method == 'POST':
+        nome = request.form['nome']
+        email = request.form['email']
+        senha = request.form['senha']
+        tipo = request.form['tipo']
+
+        if Usuario.query.filter_by(email=email).first():
+            flash('E-mail já cadastrado.', 'danger')
+        else:
+            novo = Usuario(nome=nome, email=email, senha=senha, tipo=tipo)
+            db.session.add(novo)
+            db.session.commit()
+            flash('Usuário cadastrado com sucesso!', 'success')
+            return redirect(url_for('main.cadastrar_usuario'))
+
+    return render_template('cadastrar_usuario.html')
 
 @bp.route('/perfil', methods=['GET', 'POST'])
 @login_obrigatorio
@@ -81,6 +108,11 @@ def dashboard():
     mov_list = [(m.tipo, m.categoria, m.valor, m.data, m.id) for m in movimentacoes]
 
     return render_template('dashboard.html', usuario=usuario, saldo=saldo, movimentacoes=mov_list)
+
+@bp.route('/caixa', methods=['GET', 'POST'])
+@login_obrigatorio
+def caixa():
+    return render_template('caixa.html')
 
 @bp.route('/excluir/<int:id>')
 @login_obrigatorio

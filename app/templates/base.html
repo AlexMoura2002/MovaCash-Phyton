@@ -11,21 +11,30 @@
     <!-- Navbar Fixa -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
         <div class="container-fluid">
-            <a class="navbar-brand" href="{{ url_for('main.dashboard') }}">Movacash</a>
+            <a class="navbar-brand" href="{% if session.tipo == 'admin' %}{{ url_for('main.dashboard') }}{% else %}{{ url_for('main.caixa') }}{% endif %}">Movacash</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.dashboard') }}">Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.contas') }}">Contas</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.relatorios') }}">Relatórios</a>
-                    </li>
+                    {% if session.tipo == 'admin' %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.dashboard') }}">Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.contas') }}">Contas</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.relatorios') }}">Relatórios</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.cadastrar_usuario') }}">Usuários</a>
+                        </li>
+                    {% elif session.tipo == 'vendedor' %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.caixa') }}">Caixa</a>
+                        </li>
+                    {% endif %}
                 </ul>
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
