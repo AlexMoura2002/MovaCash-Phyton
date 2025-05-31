@@ -41,6 +41,23 @@ def cadastro():
         return redirect(url_for('main.login'))
     return render_template('cadastro.html')
 
+@bp.route('/perfil', methods=['GET', 'POST'])
+@login_obrigatorio
+def perfil():
+    usuario_id = session['usuario_id']
+    usuario = Usuario.query.get(usuario_id)
+
+    if request.method == 'POST':
+        usuario.nome = request.form['nome']
+        usuario.email = request.form['email']
+        nova_senha = request.form['senha']
+        if nova_senha:
+            usuario.senha = nova_senha
+        db.session.commit()
+        return redirect(url_for('main.perfil'))
+
+    return render_template('perfil.html', usuario=usuario)
+
 @bp.route('/dashboard', methods=['GET', 'POST'])
 @login_obrigatorio
 def dashboard():
