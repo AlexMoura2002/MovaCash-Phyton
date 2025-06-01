@@ -5,6 +5,19 @@
 {% block content %}
 <h2 class="mb-4">Contas a Pagar e Receber</h2>
 
+<!-- Mensagens Flash -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show mt-3" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<!-- Cadastro de Nova Conta -->
 <div class="card mb-4">
     <div class="card-body">
         <h5 class="card-title">Cadastrar Nova Conta</h5>
@@ -25,7 +38,7 @@
                 <label class="form-label">Status:</label>
                 <select name="status" class="form-select" required>
                     <option value="pendente">Pendente</option>
-                    <option value="pago">Pago</option>
+                    <option value="paga">Paga</option>
                 </select>
             </div>
             <button type="submit" class="btn btn-success">Cadastrar Conta</button>
@@ -33,6 +46,7 @@
     </div>
 </div>
 
+<!-- Lista de Contas -->
 <div class="card">
     <div class="card-body">
         <h5 class="card-title">Lista de Contas</h5>
@@ -42,7 +56,10 @@
                 {% for conta in contas %}
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <div>
-                            {{ conta.vencimento }} - {{ conta.descricao }} - R$ {{ "%.2f"|format(conta.valor) }} - <strong>{{ conta.status|capitalize }}</strong>
+                            {{ conta.vencimento.strftime('%d/%m/%Y') }} - 
+                            {{ conta.descricao }} - 
+                            R$ {{ "%.2f"|format(conta.valor) }} - 
+                            <strong>{{ conta.status|capitalize }}</strong>
                         </div>
                         <div>
                             <a href="{{ url_for('main.editar_conta', id=conta.id) }}" class="btn btn-sm btn-warning">Editar</a>

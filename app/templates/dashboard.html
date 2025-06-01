@@ -6,6 +6,30 @@
 <div class="container mt-4">
     <h2 class="mb-4">Bem-vindo, {{ usuario }}!</h2>
 
+    <!-- Alertas (flash messages) -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Aviso: Contas a pagar nos próximos 3 dias -->
+    {% if contas_proximas %}
+      <div class="alert alert-warning">
+        <strong>Atenção:</strong> Você tem {{ contas_proximas|length }} conta(s) a vencer nos próximos 3 dias:
+        <ul>
+            {% for c in contas_proximas %}
+                <li>{{ c.descricao }} - vence em {{ c.vencimento.strftime('%d/%m/%Y') }} - R$ {{ "%.2f"|format(c.valor) }}</li>
+            {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
     <!-- Filtro por Mês e Ano -->
     <form method="GET" class="row g-3 mb-4 align-items-end">
         <div class="col-auto">
@@ -32,7 +56,7 @@
             <div class="card text-bg-success shadow">
                 <div class="card-body">
                     <h5 class="card-title">Receitas</h5>
-                    <p class="card-text fs-4">R$ {{ total_receitas | round(2) }}</p>
+                    <p class="card-text fs-4">R$ {{ total_receitas | default(0) | round(2) }}</p>
                 </div>
             </div>
         </div>
@@ -40,7 +64,7 @@
             <div class="card text-bg-danger shadow">
                 <div class="card-body">
                     <h5 class="card-title">Despesas</h5>
-                    <p class="card-text fs-4">R$ {{ total_despesas | round(2) }}</p>
+                    <p class="card-text fs-4">R$ {{ total_despesas | default(0) | round(2) }}</p>
                 </div>
             </div>
         </div>
@@ -48,7 +72,7 @@
             <div class="card text-bg-primary shadow">
                 <div class="card-body">
                     <h5 class="card-title">Saldo</h5>
-                    <p class="card-text fs-4">R$ {{ saldo | round(2) }}</p>
+                    <p class="card-text fs-4">R$ {{ saldo | default(0) | round(2) }}</p>
                 </div>
             </div>
         </div>
