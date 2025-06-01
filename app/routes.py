@@ -6,6 +6,7 @@ from datetime import datetime, date
 import pandas as pd
 from io import BytesIO
 from sqlalchemy.orm import joinedload
+from sqlalchemy import and_
 
 bp = Blueprint('main', __name__)
 
@@ -123,19 +124,27 @@ def caixa():
     usuario_id = session['usuario_id']
 
     if request.method == 'POST':
-        tipo = request.form['tipo']
         categoria = request.form['categoria']
         valor = float(request.form['valor'])
         data_str = request.form['data']
         data = datetime.strptime(data_str, '%Y-%m-%d').date() if data_str else date.today()
 
-        nova = Movimentacao(tipo=tipo, categoria=categoria, valor=valor, data=data, usuario_id=usuario_id)
+        nova = Movimentacao(tipo='receita', categoria=categoria, valor=valor, data=data, usuario_id=usuario_id)
         db.session.add(nova)
         db.session.commit()
-        flash('Movimentação registrada com sucesso!', 'success')
+        flash('Venda registrada com sucesso!', 'success')
         return redirect(url_for('main.caixa'))
 
-    return render_template('caixa.html')
+    filtro_data_str = request.args.get('filtro_data')
+    if filtro_data_str:
+        filtro_data = datetime.strptime(filtro_data_str, '%Y-%m-%d').date()
+    else:
+        filtro_data = date.today()
+
+    vendas = Movimentacao.query.filter_by(usuario_id=usuario_id, tipo='receita', data=filtro_data)\
+                               .order_by(Movimentacao.data.desc()).all()
+
+    return render_template('caixa.html', movimentacoes=vendas, hoje=date.today().isoformat(), filtro_data=filtro_data.isoformat())
 
 
 @bp.route('/excluir/<int:id>')

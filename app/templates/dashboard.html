@@ -12,35 +12,19 @@
         </div>
     </div>
 
-    {% if session.tipo != 'admin' %}
     <div class="card mb-4">
         <div class="card-body">
-            <h5 class="card-title">Adicionar Movimentação</h5>
-            <form method="POST">
-                <div class="mb-3">
-                    <label class="form-label">Tipo:</label>
-                    <select name="tipo" class="form-select" required>
-                        <option value="receita">Receita</option>
-                        <option value="despesa">Despesa</option>
-                    </select>
+            <form method="GET" class="row g-3 align-items-end">
+                <div class="col-auto">
+                    <label class="form-label">Filtrar por data:</label>
+                    <input type="date" name="filtro_data" class="form-control" value="{{ filtro_data }}">
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Categoria:</label>
-                    <input type="text" name="categoria" class="form-control" required>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-secondary">Filtrar</button>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Valor:</label>
-                    <input type="number" name="valor" step="0.01" class="form-control" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Data:</label>
-                    <input type="date" name="data" class="form-control">
-                </div>
-                <button type="submit" class="btn btn-success">Adicionar</button>
             </form>
         </div>
     </div>
-    {% endif %}
 
     <div class="card">
         <div class="card-body">
@@ -67,7 +51,7 @@
                     {% endfor %}
                 </ul>
             {% else %}
-                <p class="text-muted">Nenhuma movimentação registrada ainda.</p>
+                <p class="text-muted">Nenhuma movimentação registrada para essa data.</p>
             {% endif %}
         </div>
     </div>
