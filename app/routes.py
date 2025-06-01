@@ -21,6 +21,9 @@ def login():
         senha = request.form.get('senha')
         usuario = Usuario.query.filter_by(email=email, senha=senha).first()
         if usuario:
+            usuario.ultimo_acesso = datetime.now()
+            db.session.commit()
+
             session['usuario_id'] = usuario.id
             session['nome'] = usuario.nome
             session['tipo'] = usuario.tipo
@@ -30,6 +33,24 @@ def login():
                 return redirect(url_for('main.caixa'))
         flash('Credenciais inválidas', 'danger')
     return render_template('login.html')
+
+@bp.route('/acessos')
+@login_obrigatorio
+def acessos():
+    if session.get('tipo') != 'admin':
+        return redirect(url_for('main.dashboard'))
+
+    hoje = date.today()
+    mes = request.args.get('mes', type=int) or hoje.month
+    ano = request.args.get('ano', type=int) or hoje.year
+
+    usuarios = Usuario.query.filter(
+        Usuario.ultimo_acesso != None,
+        extract('month', Usuario.ultimo_acesso) == mes,
+        extract('year', Usuario.ultimo_acesso) == ano
+    ).order_by(Usuario.ultimo_acesso.desc()).all()
+
+    return render_template("usuarios_logins.html", usuarios=usuarios, mes=mes, ano=ano)
 
 @bp.route('/logout')
 def logout():
@@ -94,7 +115,6 @@ def dashboard():
     usuario_id = session['usuario_id']
     usuario = Usuario.query.get(usuario_id)
 
-    # 🔔 VERIFICAÇÃO DE CONTAS PRÓXIMAS DO VENCIMENTO
     hoje = date.today()
     limite = hoje + timedelta(days=3)
 
@@ -108,7 +128,6 @@ def dashboard():
     if contas_proximas:
         flash(f'⚠️ Você tem {len(contas_proximas)} conta(s) a vencer nos próximos 3 dias!', 'warning')
 
-    # Registro de nova movimentação (se enviado via POST)
     if request.method == 'POST':
         tipo = request.form['tipo']
         categoria = request.form['categoria']
@@ -120,7 +139,6 @@ def dashboard():
         db.session.add(nova)
         db.session.commit()
 
-    # Carregamento de movimentações
     if usuario.tipo == 'admin':
         movimentacoes = db.session.query(Movimentacao).options(joinedload(Movimentacao.usuario)).order_by(Movimentacao.data.desc()).all()
     else:
@@ -134,6 +152,9 @@ def dashboard():
     ]
 
     return render_template('dashboard.html', usuario=usuario.nome, saldo=saldo, movimentacoes=mov_list)
+
+# (Demais rotas continuam abaixo sem alteração: caixa, contas, relatórios etc.)
+
 
 @bp.route('/caixa', methods=['GET', 'POST'])
 @login_obrigatorio

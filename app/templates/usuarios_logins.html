@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Últimos Acessos{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">📋 Últimos acessos dos usuários</h2>
+
+<!-- Filtro por mês e ano -->
+<form method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+        <label for="mes" class="form-label">Mês:</label>
+        <select name="mes" id="mes" class="form-select">
+            {% for m in range(1, 13) %}
+                <option value="{{ m }}" {% if m == mes %}selected{% endif %}>{{ m }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-auto">
+        <label for="ano" class="form-label">Ano:</label>
+        <input type="number" name="ano" id="ano" value="{{ ano }}" class="form-control">
+    </div>
+    <div class="col-auto align-self-end">
+        <button type="submit" class="btn btn-primary">Filtrar</button>
+    </div>
+</form>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Nome</th>
+            <th>Email</th>
+            <th>Tipo</th>
+            <th>Último Acesso</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for u in usuarios %}
+        <tr>
+            <td>{{ u.nome }}</td>
+            <td>{{ u.email }}</td>
+            <td>{{ u.tipo }}</td>
+            <td>
+                {% if u.ultimo_acesso %}
+                    {{ u.ultimo_acesso.strftime('%d/%m/%Y %H:%M:%S') }}
+                {% else %}
+                    Nunca acessou
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

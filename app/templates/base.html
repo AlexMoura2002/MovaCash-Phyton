@@ -30,6 +30,9 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('main.cadastrar_usuario') }}">Usuários</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.acessos') }}">Acessos</a>
+                        </li>
                     {% elif session.tipo == 'vendedor' %}
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('main.caixa') }}">Caixa</a>
