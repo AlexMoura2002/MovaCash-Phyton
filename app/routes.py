@@ -2,13 +2,11 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from .models import Usuario, Movimentacao, Conta
 from . import db
 from .utils import login_obrigatorio
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import pandas as pd
 from io import BytesIO
 from sqlalchemy.orm import joinedload
-from sqlalchemy import and_
-from sqlalchemy import func, extract, case
-
+from sqlalchemy import and_, func, extract, case
 
 bp = Blueprint('main', __name__)
 
@@ -96,6 +94,21 @@ def dashboard():
     usuario_id = session['usuario_id']
     usuario = Usuario.query.get(usuario_id)
 
+    # 🔔 VERIFICAÇÃO DE CONTAS PRÓXIMAS DO VENCIMENTO
+    hoje = date.today()
+    limite = hoje + timedelta(days=3)
+
+    contas_proximas = Conta.query.filter(
+        Conta.usuario_id == usuario_id,
+        Conta.status != 'paga',
+        Conta.vencimento <= limite,
+        Conta.vencimento >= hoje
+    ).all()
+
+    if contas_proximas:
+        flash(f'⚠️ Você tem {len(contas_proximas)} conta(s) a vencer nos próximos 3 dias!', 'warning')
+
+    # Registro de nova movimentação (se enviado via POST)
     if request.method == 'POST':
         tipo = request.form['tipo']
         categoria = request.form['categoria']
@@ -107,12 +120,14 @@ def dashboard():
         db.session.add(nova)
         db.session.commit()
 
+    # Carregamento de movimentações
     if usuario.tipo == 'admin':
         movimentacoes = db.session.query(Movimentacao).options(joinedload(Movimentacao.usuario)).order_by(Movimentacao.data.desc()).all()
     else:
         movimentacoes = Movimentacao.query.filter_by(usuario_id=usuario_id).order_by(Movimentacao.data.desc()).all()
 
     saldo = sum(m.valor if m.tipo == 'receita' else -m.valor for m in movimentacoes)
+
     mov_list = [
         (m.tipo, m.categoria, m.valor, m.data, m.id, m.usuario.nome if usuario.tipo == 'admin' else None)
         for m in movimentacoes
@@ -147,7 +162,6 @@ def caixa():
                                .order_by(Movimentacao.data.desc()).all()
 
     return render_template('caixa.html', movimentacoes=vendas, hoje=date.today().isoformat(), filtro_data=filtro_data.isoformat())
-
 
 @bp.route('/excluir/<int:id>')
 @login_obrigatorio
@@ -201,65 +215,103 @@ def excluir_conta(id):
     db.session.commit()
     return redirect(url_for('main.contas'))
 
-
 @bp.route('/relatorios', methods=['GET', 'POST'])
 @login_obrigatorio
 def relatorios():
     usuario_id = session['usuario_id']
-    tipo_usuario = session.get('tipo')
+    tipo = session.get('tipo')
+    hoje = date.today()
+    mes = hoje.month
+    ano = hoje.year
 
     if request.method == 'POST':
-        mes = int(request.form.get('mes'))
-        ano = int(request.form.get('ano'))
+        mes = int(request.form.get('mes') or mes)
+        ano = int(request.form.get('ano') or ano)
+        vendedor_id = request.form.get('vendedor_id') if tipo == 'admin' else usuario_id
+        categoria = request.form.get('categoria')
+        valor_min = request.form.get('valor_min')
+        valor_max = request.form.get('valor_max')
+        data_inicial = request.form.get('data_inicial')
+        data_final = request.form.get('data_final')
     else:
-        hoje = date.today()
-        mes = hoje.month
-        ano = hoje.year
+        vendedor_id = usuario_id
+        categoria = valor_min = valor_max = data_inicial = data_final = None
 
-    # Consulta base (admin vê tudo, vendedor vê apenas suas movimentações)
-    query_base = Movimentacao.query
-    if tipo_usuario != 'admin':
-        query_base = query_base.filter_by(usuario_id=usuario_id)
+    query = Movimentacao.query.filter(
+        extract('month', Movimentacao.data) == mes,
+        extract('year', Movimentacao.data) == ano
+    )
 
-    # Receitas por categoria
-    receitas = query_base.filter_by(tipo='receita')\
-        .filter(extract('month', Movimentacao.data) == mes)\
-        .filter(extract('year', Movimentacao.data) == ano)\
-        .with_entities(Movimentacao.categoria, func.sum(Movimentacao.valor))\
-        .group_by(Movimentacao.categoria).all()
+    if vendedor_id:
+        query = query.filter(Movimentacao.usuario_id == vendedor_id)
+    if categoria:
+        query = query.filter(Movimentacao.categoria == categoria)
+    if valor_min:
+        query = query.filter(Movimentacao.valor >= float(valor_min))
+    if valor_max:
+        query = query.filter(Movimentacao.valor <= float(valor_max))
+    if data_inicial:
+        query = query.filter(Movimentacao.data >= data_inicial)
+    if data_final:
+        query = query.filter(Movimentacao.data <= data_final)
 
-    # Despesas por categoria
-    despesas = query_base.filter_by(tipo='despesa')\
-        .filter(extract('month', Movimentacao.data) == mes)\
-        .filter(extract('year', Movimentacao.data) == ano)\
-        .with_entities(Movimentacao.categoria, func.sum(Movimentacao.valor))\
-        .group_by(Movimentacao.categoria).all()
+    movimentos = query.all()
 
-    # Evolução mensal (admin vê todos os usuários; vendedores só o próprio)
-    evolucao = query_base.filter(extract('year', Movimentacao.data) == ano)\
-        .with_entities(
-            extract('month', Movimentacao.data).label('mes'),
-            func.sum(case((Movimentacao.tipo == 'receita', Movimentacao.valor), else_=0)).label('total_receitas'),
-            func.sum(case((Movimentacao.tipo == 'despesa', Movimentacao.valor), else_=0)).label('total_despesas')
-        )\
-        .group_by('mes')\
-        .order_by('mes')\
-        .all()
+    receitas = db.session.query(
+        Movimentacao.categoria,
+        func.sum(Movimentacao.valor)
+    ).filter_by(tipo='receita').filter(
+        extract('month', Movimentacao.data) == mes,
+        extract('year', Movimentacao.data) == ano
+    )
+    if vendedor_id:
+        receitas = receitas.filter(Movimentacao.usuario_id == vendedor_id)
+    receitas = receitas.group_by(Movimentacao.categoria).all()
 
-    # Dados para os gráficos em formato JSON
-    receitas_json = pd.DataFrame(receitas, columns=["Categoria", "Total"]).to_json(orient='values') if receitas else []
-    despesas_json = pd.DataFrame(despesas, columns=["Categoria", "Total"]).to_json(orient='values') if despesas else []
-    evolucao_json = pd.DataFrame(evolucao, columns=["mes", "total_receitas", "total_despesas"]).to_json(orient='records') if evolucao else []
+    despesas = db.session.query(
+        Movimentacao.categoria,
+        func.sum(Movimentacao.valor)
+    ).filter_by(tipo='despesa').filter(
+        extract('month', Movimentacao.data) == mes,
+        extract('year', Movimentacao.data) == ano
+    )
+    if vendedor_id:
+        despesas = despesas.filter(Movimentacao.usuario_id == vendedor_id)
+    despesas = despesas.group_by(Movimentacao.categoria).all()
 
-    return render_template('relatorios.html',
-                           receitas=receitas,
-                           despesas=despesas,
-                           mes=mes,
-                           ano=ano,
-                           receitas_json=receitas_json,
-                           despesas_json=despesas_json,
-                           evolucao_json=evolucao_json)
+    evolucao = db.session.query(
+        extract('month', Movimentacao.data).label('mes'),
+        func.sum(case((Movimentacao.tipo == 'receita', Movimentacao.valor), else_=0)).label('total_receitas'),
+        func.sum(case((Movimentacao.tipo == 'despesa', Movimentacao.valor), else_=0)).label('total_despesas')
+    ).filter(
+        extract('year', Movimentacao.data) == ano
+    )
+    if vendedor_id:
+        evolucao = evolucao.filter(Movimentacao.usuario_id == vendedor_id)
+    evolucao = evolucao.group_by('mes').order_by('mes').all()
 
+    receitas_json = [[r[0], float(r[1])] for r in receitas]
+    despesas_json = [[d[0], float(d[1])] for d in despesas]
+    evolucao_json = [
+        {"mes": str(int(e.mes)).zfill(2), "total_receitas": float(e.total_receitas), "total_despesas": float(e.total_despesas)}
+        for e in evolucao
+    ]
+
+    vendedores = Usuario.query.filter_by(tipo='vendedor').all() if tipo == 'admin' else []
+    categorias = db.session.query(Movimentacao.categoria).distinct().all()
+
+    return render_template("relatorios.html",
+        tipo=tipo,
+        vendedores=vendedores,
+        categorias=categorias,
+        receitas=receitas,
+        despesas=despesas,
+        receitas_json=receitas_json,
+        despesas_json=despesas_json,
+        evolucao_json=evolucao_json,
+        mes=mes,
+        ano=ano
+    )
 
 @bp.route('/exportar-excel')
 @login_obrigatorio
@@ -298,3 +350,4 @@ def editar_movimentacao(id):
         db.session.commit()
         return redirect(url_for('main.dashboard'))
     return render_template('editar_movimentacao.html', m=movimentacao)
+                                                                                                        

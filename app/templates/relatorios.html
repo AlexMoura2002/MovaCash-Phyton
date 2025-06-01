@@ -7,24 +7,68 @@
     <h2>📊 Relatórios Financeiros</h2>
 
     <form method="POST" class="row g-3 mb-4">
-        <div class="col-md-3">
+        <div class="col-md-2">
             <label class="form-label">Mês:</label>
-            <select class="form-select" name="mes" required>
+            <select class="form-select" name="mes">
                 {% for i in range(1, 13) %}
                     <option value="{{ i }}" {% if mes is defined and mes|int == i %}selected{% endif %}>{{ i }}</option>
                 {% endfor %}
             </select>
         </div>
-        <div class="col-md-3">
+
+        <div class="col-md-2">
             <label class="form-label">Ano:</label>
-            <select class="form-select" name="ano" required>
+            <select class="form-select" name="ano">
                 {% for a in range(2022, 2031) %}
                     <option value="{{ a }}" {% if ano is defined and ano|int == a %}selected{% endif %}>{{ a }}</option>
                 {% endfor %}
             </select>
         </div>
+
+        {% if tipo == 'admin' %}
+        <div class="col-md-3">
+            <label class="form-label">Vendedor:</label>
+            <select class="form-select" name="vendedor_id">
+                <option value="">Todos</option>
+                {% for v in vendedores %}
+                    <option value="{{ v.id }}">{{ v.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+
+        <div class="col-md-3">
+            <label class="form-label">Categoria:</label>
+            <select class="form-select" name="categoria">
+                <option value="">Todas</option>
+                {% for c in categorias %}
+                    <option value="{{ c.categoria }}">{{ c.categoria }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Valor mín.:</label>
+            <input type="number" step="0.01" class="form-control" name="valor_min">
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Valor máx.:</label>
+            <input type="number" step="0.01" class="form-control" name="valor_max">
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Data inicial:</label>
+            <input type="date" class="form-control" name="data_inicial">
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Data final:</label>
+            <input type="date" class="form-control" name="data_final">
+        </div>
+
         <div class="col-md-3 align-self-end">
-            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <button type="submit" class="btn btn-primary w-100">Filtrar</button>
         </div>
     </form>
 
