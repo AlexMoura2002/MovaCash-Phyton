@@ -90,7 +90,39 @@ def cadastrar_usuario():
             flash('Usuário cadastrado com sucesso!', 'success')
             return redirect(url_for('main.cadastrar_usuario'))
 
-    return render_template('cadastrar_usuario.html')
+    usuarios = Usuario.query.order_by(Usuario.nome).all()
+    return render_template('cadastrar_usuario.html', usuarios=usuarios)
+
+@bp.route('/excluir-usuario/<int:id>', methods=['POST'])
+@login_obrigatorio
+def excluir_usuario(id):
+    if session.get('tipo') != 'admin':
+        return redirect(url_for('main.dashboard'))
+
+    usuario = Usuario.query.get_or_404(id)
+
+    # Verifica se é admin e se é o último admin no sistema
+    if usuario.tipo == 'admin':
+        total_admins = Usuario.query.filter_by(tipo='admin').count()
+        if total_admins <= 1:
+            flash('Não é possível excluir o último administrador do sistema.', 'danger')
+            return redirect(url_for('main.cadastrar_usuario'))
+
+    # Remove movimentações e contas relacionadas    
+    Movimentacao.query.filter_by(usuario_id=usuario.id).delete()
+    Conta.query.filter_by(usuario_id=usuario.id).delete()
+    db.session.delete(usuario)
+    db.session.commit()
+
+    # Se o usuário excluído for o logado, encerra a sessão
+    if usuario.id == session.get('usuario_id'):
+        session.clear()
+        flash('Sua conta foi excluída com sucesso.', 'info')
+        return redirect(url_for('main.login'))
+
+    flash('Usuário excluído com sucesso.', 'success')
+    return redirect(url_for('main.cadastrar_usuario'))
+
 
 @bp.route('/perfil', methods=['GET', 'POST'])
 @login_obrigatorio
@@ -166,8 +198,6 @@ def dashboard():
                            filtro_data=filtro_data.isoformat(), mes=mes, ano=ano,
                            total_receitas=total_receitas, total_despesas=total_despesas)
 
-
-# (Demais rotas continuam abaixo sem alteração: caixa, contas, relatórios etc.)
 
 
 @bp.route('/caixa', methods=['GET', 'POST'])
