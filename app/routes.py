@@ -116,12 +116,13 @@ def dashboard():
     usuario = Usuario.query.get(usuario_id)
 
     hoje = date.today()
-    limite = hoje + timedelta(days=3)
+    mes = request.args.get('mes', type=int, default=hoje.month)
+    ano = request.args.get('ano', type=int, default=hoje.year)
 
     contas_proximas = Conta.query.filter(
         Conta.usuario_id == usuario_id,
         Conta.status != 'paga',
-        Conta.vencimento <= limite,
+        Conta.vencimento <= hoje + timedelta(days=3),
         Conta.vencimento >= hoje
     ).all()
 
@@ -139,19 +140,32 @@ def dashboard():
         db.session.add(nova)
         db.session.commit()
 
-    if usuario.tipo == 'admin':
-        movimentacoes = db.session.query(Movimentacao).options(joinedload(Movimentacao.usuario)).order_by(Movimentacao.data.desc()).all()
-    else:
-        movimentacoes = Movimentacao.query.filter_by(usuario_id=usuario_id).order_by(Movimentacao.data.desc()).all()
+    query = Movimentacao.query.filter(
+        extract('month', Movimentacao.data) == mes,
+        extract('year', Movimentacao.data) == ano
+    )
 
-    saldo = sum(m.valor if m.tipo == 'receita' else -m.valor for m in movimentacoes)
+    if usuario.tipo != 'admin':
+        query = query.filter_by(usuario_id=usuario_id)
+
+    movimentacoes = query.order_by(Movimentacao.data.desc()).all()
+
+    total_receitas = sum(m.valor for m in movimentacoes if m.tipo == 'receita')
+    total_despesas = sum(m.valor for m in movimentacoes if m.tipo == 'despesa')
+    saldo = total_receitas - total_despesas
 
     mov_list = [
         (m.tipo, m.categoria, m.valor, m.data, m.id, m.usuario.nome if usuario.tipo == 'admin' else None)
         for m in movimentacoes
     ]
 
-    return render_template('dashboard.html', usuario=usuario.nome, saldo=saldo, movimentacoes=mov_list)
+    filtro_data_str = request.args.get('filtro_data')
+    filtro_data = datetime.strptime(filtro_data_str, '%Y-%m-%d').date() if filtro_data_str else hoje
+
+    return render_template('dashboard.html', usuario=usuario.nome, saldo=saldo, movimentacoes=mov_list,
+                           filtro_data=filtro_data.isoformat(), mes=mes, ano=ano,
+                           total_receitas=total_receitas, total_despesas=total_despesas)
+
 
 # (Demais rotas continuam abaixo sem alteração: caixa, contas, relatórios etc.)
 

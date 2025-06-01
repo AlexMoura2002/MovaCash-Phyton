@@ -6,12 +6,55 @@
 <div class="container mt-4">
     <h2 class="mb-4">Bem-vindo, {{ usuario }}!</h2>
 
-    <div class="card mb-4">
-        <div class="card-body">
-            <h4 class="card-title">Saldo atual: R$ {{ "%.2f"|format(saldo) }}</h4>
+    <!-- Filtro por Mês e Ano -->
+    <form method="GET" class="row g-3 mb-4 align-items-end">
+        <div class="col-auto">
+            <label class="form-label">Mês:</label>
+            <select name="mes" class="form-select">
+                {% for m in range(1, 13) %}
+                    <option value="{{ m }}" {% if m == mes %}selected{% endif %}>{{ m }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-auto">
+            <label class="form-label">Ano:</label>
+            <input type="number" name="ano" class="form-control" value="{{ ano }}">
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+        </div>
+    </form>
+
+    <!-- Resumo Financeiro -->
+    <h4 class="mb-3">📊 Resumo Financeiro de {{ mes }}/{{ ano }}</h4>
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-bg-success shadow">
+                <div class="card-body">
+                    <h5 class="card-title">Receitas</h5>
+                    <p class="card-text fs-4">R$ {{ total_receitas | round(2) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-bg-danger shadow">
+                <div class="card-body">
+                    <h5 class="card-title">Despesas</h5>
+                    <p class="card-text fs-4">R$ {{ total_despesas | round(2) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-bg-primary shadow">
+                <div class="card-body">
+                    <h5 class="card-title">Saldo</h5>
+                    <p class="card-text fs-4">R$ {{ saldo | round(2) }}</p>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- Filtro por Data Específica -->
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" class="row g-3 align-items-end">
@@ -26,6 +69,7 @@
         </div>
     </div>
 
+    <!-- Lista de Movimentações -->
     <div class="card">
         <div class="card-body">
             <h5 class="card-title">Movimentações</h5>
