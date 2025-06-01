@@ -7,6 +7,8 @@ import pandas as pd
 from io import BytesIO
 from sqlalchemy.orm import joinedload
 from sqlalchemy import and_
+from sqlalchemy import func, extract, case
+
 
 bp = Blueprint('main', __name__)
 
@@ -199,10 +201,13 @@ def excluir_conta(id):
     db.session.commit()
     return redirect(url_for('main.contas'))
 
+
 @bp.route('/relatorios', methods=['GET', 'POST'])
 @login_obrigatorio
 def relatorios():
     usuario_id = session['usuario_id']
+    tipo_usuario = session.get('tipo')
+
     if request.method == 'POST':
         mes = int(request.form.get('mes'))
         ano = int(request.form.get('ano'))
@@ -211,33 +216,50 @@ def relatorios():
         mes = hoje.month
         ano = hoje.year
 
-    receitas = db.session.query(Movimentacao.categoria, db.func.sum(Movimentacao.valor))\
-        .filter_by(usuario_id=usuario_id, tipo='receita')\
-        .filter(db.extract('month', Movimentacao.data) == mes)\
-        .filter(db.extract('year', Movimentacao.data) == ano)\
+    # Consulta base (admin vê tudo, vendedor vê apenas suas movimentações)
+    query_base = Movimentacao.query
+    if tipo_usuario != 'admin':
+        query_base = query_base.filter_by(usuario_id=usuario_id)
+
+    # Receitas por categoria
+    receitas = query_base.filter_by(tipo='receita')\
+        .filter(extract('month', Movimentacao.data) == mes)\
+        .filter(extract('year', Movimentacao.data) == ano)\
+        .with_entities(Movimentacao.categoria, func.sum(Movimentacao.valor))\
         .group_by(Movimentacao.categoria).all()
 
-    despesas = db.session.query(Movimentacao.categoria, db.func.sum(Movimentacao.valor))\
-        .filter_by(usuario_id=usuario_id, tipo='despesa')\
-        .filter(db.extract('month', Movimentacao.data) == mes)\
-        .filter(db.extract('year', Movimentacao.data) == ano)\
+    # Despesas por categoria
+    despesas = query_base.filter_by(tipo='despesa')\
+        .filter(extract('month', Movimentacao.data) == mes)\
+        .filter(extract('year', Movimentacao.data) == ano)\
+        .with_entities(Movimentacao.categoria, func.sum(Movimentacao.valor))\
         .group_by(Movimentacao.categoria).all()
 
-    evolucao = db.session.query(
-        db.extract('month', Movimentacao.data).label('mes'),
-        db.func.sum(db.case((Movimentacao.tipo == 'receita', Movimentacao.valor), else_=0)).label('total_receitas'),
-        db.func.sum(db.case((Movimentacao.tipo == 'despesa', Movimentacao.valor), else_=0)).label('total_despesas')
-    ).filter_by(usuario_id=usuario_id)\
-     .filter(db.extract('year', Movimentacao.data) == ano)\
-     .group_by(db.extract('month', Movimentacao.data))\
-     .order_by(db.extract('month', Movimentacao.data)).all()
+    # Evolução mensal (admin vê todos os usuários; vendedores só o próprio)
+    evolucao = query_base.filter(extract('year', Movimentacao.data) == ano)\
+        .with_entities(
+            extract('month', Movimentacao.data).label('mes'),
+            func.sum(case((Movimentacao.tipo == 'receita', Movimentacao.valor), else_=0)).label('total_receitas'),
+            func.sum(case((Movimentacao.tipo == 'despesa', Movimentacao.valor), else_=0)).label('total_despesas')
+        )\
+        .group_by('mes')\
+        .order_by('mes')\
+        .all()
 
+    # Dados para os gráficos em formato JSON
     receitas_json = pd.DataFrame(receitas, columns=["Categoria", "Total"]).to_json(orient='values') if receitas else []
     despesas_json = pd.DataFrame(despesas, columns=["Categoria", "Total"]).to_json(orient='values') if despesas else []
     evolucao_json = pd.DataFrame(evolucao, columns=["mes", "total_receitas", "total_despesas"]).to_json(orient='records') if evolucao else []
 
-    return render_template('relatorios.html', receitas=receitas, despesas=despesas, mes=mes, ano=ano,
-                           receitas_json=receitas_json, despesas_json=despesas_json, evolucao_json=evolucao_json)
+    return render_template('relatorios.html',
+                           receitas=receitas,
+                           despesas=despesas,
+                           mes=mes,
+                           ano=ano,
+                           receitas_json=receitas_json,
+                           despesas_json=despesas_json,
+                           evolucao_json=evolucao_json)
+
 
 @bp.route('/exportar-excel')
 @login_obrigatorio
