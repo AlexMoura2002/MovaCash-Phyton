@@ -28,10 +28,10 @@ class Movimentacao(db.Model):
 
 class Conta(db.Model):
     __tablename__ = 'contas'
-
     id = db.Column(db.Integer, primary_key=True)
     descricao = db.Column(db.String(100), nullable=False)
     valor = db.Column(db.Float, nullable=False)
     vencimento = db.Column(db.Date, nullable=False)
     status = db.Column(db.String(20), nullable=False)
+    tipo = db.Column(db.String(20), nullable=False)  # ✅ Campo adicionado
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)

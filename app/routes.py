@@ -196,27 +196,45 @@ def deletar_usuario(id):
 @login_obrigatorio
 def editar_conta(id):
     conta = Conta.query.get(id)
+
     if request.method == 'POST':
         conta.descricao = request.form['descricao']
         conta.valor = float(request.form['valor'])
         conta.vencimento = datetime.strptime(request.form['vencimento'], '%Y-%m-%d').date()
         novo_status = request.form['status']
+        novo_tipo = request.form['tipo']
 
         # Se status mudou para "paga" e não estava assim antes
-        if novo_status == 'paga' and conta.status != 'paga':
-            despesa = Movimentacao(
+        if novo_status == 'paga' and conta.status != 'paga' and novo_tipo == 'pagar':
+            # Evita criar duplicatas: verifica se já existe movimentação igual
+            existe = Movimentacao.query.filter_by(
                 tipo='despesa',
                 categoria='Conta: ' + conta.descricao,
                 valor=conta.valor,
                 data=conta.vencimento,
                 usuario_id=conta.usuario_id
-            )
-            db.session.add(despesa)
+            ).first()
+
+            if not existe:
+                despesa = Movimentacao(
+                    tipo='despesa',
+                    categoria='Conta: ' + conta.descricao,
+                    valor=conta.valor,
+                    data=conta.vencimento,
+                    usuario_id=conta.usuario_id
+                )
+                db.session.add(despesa)
 
         conta.status = novo_status
+        conta.tipo = novo_tipo
         db.session.commit()
+        flash('Conta atualizada com sucesso.', 'success')
         return redirect(url_for('main.contas'))
+
     return render_template('editar_conta.html', conta=conta)
+
+
+
 
 
 
@@ -375,12 +393,18 @@ def contas():
         valor = float(request.form['valor'])
         vencimento = datetime.strptime(request.form['vencimento'], '%Y-%m-%d').date()
         status = request.form['status']
+        tipo = request.form.get('tipo')  # ✔️ seguro
+
+        if not tipo:
+            flash('Erro: o campo "tipo" é obrigatório.', 'danger')
+            return redirect(url_for('main.contas'))
 
         nova_conta = Conta(
             descricao=descricao,
             valor=valor,
             vencimento=vencimento,
             status=status,
+            tipo=tipo,
             usuario_id=session['usuario_id']
         )
         db.session.add(nova_conta)
