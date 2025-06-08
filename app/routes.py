@@ -431,3 +431,42 @@ def excluir_movimentacao(id):
     db.session.commit()
     flash("Movimentação excluída com sucesso.", "success")
     return redirect(url_for('main.dashboard'))
+
+@bp.route('/caixa', methods=['GET', 'POST'])
+@login_obrigatorio
+def caixa():
+    if session.get('tipo') != 'vendedor':
+        return redirect(url_for('main.dashboard'))
+
+    usuario_id = session['usuario_id']
+    hoje = date.today()
+    filtro_data = request.args.get('filtro_data') or hoje.strftime('%Y-%m-%d')
+
+    if request.method == 'POST':
+        categoria = request.form['categoria']
+        valor = float(request.form['valor'])
+        data = request.form['data']
+        data_formatada = datetime.strptime(data, '%Y-%m-%d').date()
+
+        nova_venda = Movimentacao(
+            tipo='receita',
+            categoria=categoria,
+            valor=valor,
+            data=data_formatada,
+            usuario_id=usuario_id
+        )
+        db.session.add(nova_venda)
+        db.session.commit()
+        flash('Venda registrada com sucesso!', 'success')
+        return redirect(url_for('main.caixa'))
+
+    vendas = Movimentacao.query.filter_by(tipo='receita', usuario_id=usuario_id)
+    if filtro_data:
+        try:
+            data_filtrada = datetime.strptime(filtro_data, '%Y-%m-%d').date()
+            vendas = vendas.filter(Movimentacao.data == data_filtrada)
+        except ValueError:
+            flash('Data inválida para filtro.', 'danger')
+    vendas = vendas.order_by(Movimentacao.data.desc()).all()
+
+    return render_template('caixa.html', movimentacoes=vendas, filtro_data=filtro_data, hoje=hoje.strftime('%Y-%m-%d'))
