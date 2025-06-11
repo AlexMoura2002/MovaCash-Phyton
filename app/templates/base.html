@@ -53,13 +53,13 @@
             <h4><i class="bi bi-cash-coin"></i> Movacash</h4>
         </div>
 
-        {% if session.tipo == 'admin' %}
+        {% if session.get('tipo') == 'admin' %}
             <a href="{{ url_for('main.dashboard') }}"><i class="bi bi-bar-chart-line"></i> Dashboard</a>
             <a href="{{ url_for('main.contas') }}"><i class="bi bi-wallet2"></i> Contas</a>
             <a href="{{ url_for('main.relatorios') }}"><i class="bi bi-pie-chart"></i> Relatórios</a>
             <a href="{{ url_for('main.cadastrar_usuario') }}"><i class="bi bi-people-fill"></i> Usuários</a>
             <a href="{{ url_for('main.usuarios_logins') }}"><i class="bi bi-clock-history"></i> Acessos</a>
-        {% elif session.tipo == 'vendedor' %}
+        {% elif session.get('tipo') == 'vendedor' %}
             <a href="{{ url_for('main.caixa') }}"><i class="bi bi-cash-stack"></i> Caixa</a>
         {% endif %}
 

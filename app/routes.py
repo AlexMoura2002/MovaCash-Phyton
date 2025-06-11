@@ -10,13 +10,22 @@ from sqlalchemy import and_, func, extract, case
 
 bp = Blueprint('main', __name__)
 
+def redirecionar_por_tipo():
+    if session.get('tipo') == 'admin':
+        return redirect(url_for('main.dashboard'))
+    elif session.get('tipo') == 'vendedor':
+        return redirect(url_for('main.caixa'))
+    else:
+        return redirect(url_for('main.login'))
+
+# === Rotas de Login e Logout ===
 @bp.route('/')
 def home():
     return redirect(url_for('main.login'))
 
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
-    erro = None  # Adiciona variável de erro
+    erro = None
     if request.method == 'POST':
         email = request.form.get('email')
         senha = request.form.get('senha')
@@ -32,123 +41,15 @@ def login():
             else:
                 return redirect(url_for('main.caixa'))
         else:
-            erro = "Email ou senha incorretos."  # Mensagem de erro
-
+            erro = "Email ou senha incorretos."
     return render_template('login.html', erro=erro)
-
-
-@bp.route('/usuarios-logins')
-@login_obrigatorio
-def usuarios_logins():
-    if session.get('tipo') != 'admin':
-        return redirect(url_for('main.dashboard'))
-
-    hoje = date.today()
-    mes = request.args.get('mes', type=int) or hoje.month
-    ano = request.args.get('ano', type=int) or hoje.year
-
-    usuarios = Usuario.query.filter(
-        Usuario.ultimo_acesso != None,
-        extract('month', Usuario.ultimo_acesso) == mes,
-        extract('year', Usuario.ultimo_acesso) == ano
-    ).order_by(Usuario.ultimo_acesso.desc()).all()
-
-    return render_template("usuarios_logins.html", usuarios=usuarios, mes=mes, ano=ano)
 
 @bp.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('main.login'))
 
-@bp.route('/cadastro', methods=['GET', 'POST'])
-def cadastro():
-    if request.method == 'POST':
-        nome = request.form['nome']
-        email = request.form['email']
-        senha = request.form['senha']
-        usuario = Usuario(nome=nome, email=email, senha=senha, tipo='vendedor')
-        db.session.add(usuario)
-        db.session.commit()
-        return redirect(url_for('main.login'))
-    return render_template('cadastro.html')
-
-@bp.route('/dashboard')
-@login_obrigatorio
-def dashboard():
-    usuario_id = session.get('usuario_id')
-    nome_usuario = session.get('nome')
-
-    hoje = date.today()
-    filtro_data = request.args.get('filtro_data')
-    mes = int(request.args.get('mes') or hoje.month)
-    ano = int(request.args.get('ano') or hoje.year)
-
-    # Consulta base
-    query = Movimentacao.query.options(joinedload(Movimentacao.usuario)).filter(
-        extract('month', Movimentacao.data) == mes,
-        extract('year', Movimentacao.data) == ano
-    )
-
-    # Filtrar por usuário, se não for admin
-    if session['tipo'] != 'admin':
-        query = query.filter(Movimentacao.usuario_id == usuario_id)
-
-    # Filtro por data específica
-    if filtro_data:
-        try:
-            data_filtrada = datetime.strptime(filtro_data, '%Y-%m-%d').date()
-            query = query.filter(Movimentacao.data == data_filtrada)
-        except ValueError:
-            flash('Data inválida', 'danger')
-
-    movimentacoes = query.order_by(Movimentacao.data.desc()).all()
-
-    mov_list = [
-        (m.tipo, m.categoria, m.valor, m.data, m.id, m.usuario.nome if session['tipo'] == 'admin' else None)
-        for m in movimentacoes
-    ]
-
-    # Totais do mês
-    total_receitas = db.session.query(func.sum(Movimentacao.valor)).filter_by(tipo='receita').filter(
-        extract('month', Movimentacao.data) == mes,
-        extract('year', Movimentacao.data) == ano
-    )
-    total_despesas = db.session.query(func.sum(Movimentacao.valor)).filter_by(tipo='despesa').filter(
-        extract('month', Movimentacao.data) == mes,
-        extract('year', Movimentacao.data) == ano
-    )
-
-    if session['tipo'] != 'admin':
-        total_receitas = total_receitas.filter(Movimentacao.usuario_id == usuario_id)
-        total_despesas = total_despesas.filter(Movimentacao.usuario_id == usuario_id)
-
-    receitas = total_receitas.scalar() or 0
-    despesas = total_despesas.scalar() or 0
-    saldo = receitas - despesas
-
-    # 🚨 Buscar contas a vencer nos próximos 3 dias (somente admin)
-    contas_proximas = None
-    if session['tipo'] == 'admin':
-        tres_dias = hoje + timedelta(days=3)
-        contas_proximas = Conta.query.filter(
-            Conta.vencimento <= tres_dias,
-            Conta.vencimento >= hoje,
-            Conta.status != 'paga'
-        ).order_by(Conta.vencimento).all()
-
-    return render_template(
-        "dashboard.html",
-        usuario=nome_usuario,
-        saldo=saldo,
-        total_receitas=receitas,
-        total_despesas=despesas,
-        movimentacoes=mov_list,
-        filtro_data=filtro_data,
-        mes=mes,
-        ano=ano,
-        contas_proximas=contas_proximas  # <- ⚠️ IMPORTANTE
-    )
-
+# === Cadastro de usuário comum ===
 @bp.route('/cadastrar-usuario', methods=['GET', 'POST'])
 @login_obrigatorio
 def cadastrar_usuario():
@@ -173,44 +74,159 @@ def cadastrar_usuario():
     usuarios = Usuario.query.all()
     return render_template('cadastrar_usuario.html', usuarios=usuarios)
 
-@bp.route('/deletar-usuario/<int:id>', methods=['POST'])
+### Dashboard
+
+@bp.route('/dashboard')
 @login_obrigatorio
-def deletar_usuario(id):
+def dashboard():
+    usuario_id = session.get('usuario_id')
+    nome_usuario = session.get('nome')
+    hoje = date.today()
+    filtro_data = request.args.get('filtro_data')
+    mes = int(request.args.get('mes') or hoje.month)
+    ano = int(request.args.get('ano') or hoje.year)
+
+    query = Movimentacao.query.options(joinedload(Movimentacao.usuario)).filter(
+        extract('month', Movimentacao.data) == mes,
+        extract('year', Movimentacao.data) == ano
+    )
+
+    if session['tipo'] != 'admin':
+        query = query.filter(Movimentacao.usuario_id == usuario_id)
+
+    if filtro_data:
+        try:
+            data_filtrada = datetime.strptime(filtro_data, '%Y-%m-%d').date()
+            query = query.filter(Movimentacao.data == data_filtrada)
+        except ValueError:
+            flash('Data inválida', 'danger')
+
+    movimentacoes = query.order_by(Movimentacao.data.desc()).all()
+
+    mov_list = [
+        (m.tipo, m.categoria, m.valor, m.data, m.id, m.usuario.nome if session['tipo'] == 'admin' else None)
+        for m in movimentacoes
+    ]
+
+    total_receitas = db.session.query(func.sum(Movimentacao.valor)).filter_by(tipo='receita').filter(
+        extract('month', Movimentacao.data) == mes,
+        extract('year', Movimentacao.data) == ano
+    )
+    total_despesas = db.session.query(func.sum(Movimentacao.valor)).filter_by(tipo='despesa').filter(
+        extract('month', Movimentacao.data) == mes,
+        extract('year', Movimentacao.data) == ano
+    )
+
+    if session['tipo'] != 'admin':
+        total_receitas = total_receitas.filter(Movimentacao.usuario_id == usuario_id)
+        total_despesas = total_despesas.filter(Movimentacao.usuario_id == usuario_id)
+
+    receitas = total_receitas.scalar() or 0
+    despesas = total_despesas.scalar() or 0
+    saldo = receitas - despesas
+
+    contas_proximas = None
+    if session['tipo'] == 'admin':
+        tres_dias = hoje + timedelta(days=3)
+        contas_proximas = Conta.query.filter(
+            Conta.vencimento <= tres_dias,
+            Conta.vencimento >= hoje,
+            Conta.status != 'paga'
+        ).order_by(Conta.vencimento).all()
+
+    return render_template(
+        "dashboard.html",
+        usuario=nome_usuario,
+        saldo=saldo,
+        total_receitas=receitas,
+        total_despesas=despesas,
+        movimentacoes=mov_list,
+        filtro_data=filtro_data,
+        mes=mes,
+        ano=ano,
+        contas_proximas=contas_proximas
+    )
+
+
+### Caixa do Vendedor
+
+@bp.route('/caixa', methods=['GET', 'POST'])
+@login_obrigatorio
+def caixa():
+    if session.get('tipo') != 'vendedor':
+        return redirecionar_pos_login()
+
+    usuario_id = session['usuario_id']
+    hoje = date.today()
+    filtro_data = request.args.get('filtro_data') or hoje.strftime('%Y-%m-%d')
+
+    if request.method == 'POST':
+        categoria = request.form['categoria']
+        valor = float(request.form['valor'])
+        data = request.form['data']
+        data_formatada = datetime.strptime(data, '%Y-%m-%d').date()
+
+        nova_venda = Movimentacao(tipo='receita', categoria=categoria, valor=valor,
+                                   data=data_formatada, usuario_id=usuario_id)
+        db.session.add(nova_venda)
+        db.session.commit()
+        flash('Venda registrada com sucesso!', 'success')
+        return redirect(url_for('main.caixa'))
+
+    vendas = Movimentacao.query.filter_by(tipo='receita', usuario_id=usuario_id)
+    if filtro_data:
+        try:
+            data_filtrada = datetime.strptime(filtro_data, '%Y-%m-%d').date()
+            vendas = vendas.filter(Movimentacao.data == data_filtrada)
+        except ValueError:
+            flash('Data inválida para filtro.', 'danger')
+    vendas = vendas.order_by(Movimentacao.data.desc()).all()
+
+    return render_template('caixa.html', movimentacoes=vendas, filtro_data=filtro_data, hoje=hoje.strftime('%Y-%m-%d'))
+
+
+### Contas a Pagar (Admin)
+
+@bp.route('/contas', methods=['GET', 'POST'])
+@login_obrigatorio
+def contas():
     if session.get('tipo') != 'admin':
         return redirect(url_for('main.dashboard'))
 
-    if id == session.get('usuario_id'):
-        flash('Você não pode se excluir.', 'danger')
-        return redirect(url_for('main.cadastrar_usuario'))
+    if request.method == 'POST':
+        descricao = request.form['descricao']
+        valor = float(request.form['valor'])
+        vencimento = datetime.strptime(request.form['vencimento'], '%Y-%m-%d').date()
+        status = request.form['status']
 
-    usuario = Usuario.query.get(id)
-    
-    # Verificar se o usuário tem movimentações
-    if Movimentacao.query.filter_by(usuario_id=id).first():
-        flash('Não é possível excluir: este usuário possui movimentações registradas.', 'danger')
-        return redirect(url_for('main.cadastrar_usuario'))
-
-    if usuario:
-        db.session.delete(usuario)
+        nova_conta = Conta(
+            descricao=descricao,
+            valor=valor,
+            vencimento=vencimento,
+            status=status,
+            tipo='despesa',
+            usuario_id=session['usuario_id']
+        )
+        db.session.add(nova_conta)
         db.session.commit()
-        flash('Usuário deletado com sucesso.', 'success')
-    return redirect(url_for('main.cadastrar_usuario'))
+        flash('Despesa cadastrada com sucesso!', 'success')
+        return redirect(url_for('main.contas'))
+
+    contas = Conta.query.order_by(Conta.vencimento).all()
+    return render_template('contas.html', contas=contas)
 
 @bp.route('/editar-conta/<int:id>', methods=['GET', 'POST'])
 @login_obrigatorio
 def editar_conta(id):
-    conta = Conta.query.get(id)
+    conta = Conta.query.get_or_404(id)
 
     if request.method == 'POST':
         conta.descricao = request.form['descricao']
         conta.valor = float(request.form['valor'])
         conta.vencimento = datetime.strptime(request.form['vencimento'], '%Y-%m-%d').date()
         novo_status = request.form['status']
-        novo_tipo = request.form['tipo']
 
-        # Se status mudou para "paga" e não estava assim antes
-        if novo_status == 'paga' and conta.status != 'paga' and novo_tipo == 'pagar':
-            # Evita criar duplicatas: verifica se já existe movimentação igual
+        if novo_status == 'paga' and conta.status != 'paga':
             existe = Movimentacao.query.filter_by(
                 tipo='despesa',
                 categoria='Conta: ' + conta.descricao,
@@ -220,35 +236,69 @@ def editar_conta(id):
             ).first()
 
             if not existe:
-                despesa = Movimentacao(
+                nova_despesa = Movimentacao(
                     tipo='despesa',
                     categoria='Conta: ' + conta.descricao,
                     valor=conta.valor,
                     data=conta.vencimento,
                     usuario_id=conta.usuario_id
                 )
-                db.session.add(despesa)
+                db.session.add(nova_despesa)
 
         conta.status = novo_status
-        conta.tipo = novo_tipo
         db.session.commit()
-        flash('Conta atualizada com sucesso.', 'success')
-        return redirect(url_for('main.contas'))
+        flash('Despesa atualizada com sucesso!', 'success')
+        return redirecionar_por_tipo()
+
 
     return render_template('editar_conta.html', conta=conta)
-
-
-
-
-
 
 @bp.route('/excluir-conta/<int:id>')
 @login_obrigatorio
 def excluir_conta(id):
-    conta = Conta.query.get(id)
+    conta = Conta.query.get_or_404(id)
+
+    movimentacao = Movimentacao.query.filter_by(
+        tipo='despesa',
+        categoria='Conta: ' + conta.descricao,
+        valor=conta.valor,
+        data=conta.vencimento,
+        usuario_id=conta.usuario_id
+    ).first()
+
+    if movimentacao:
+        db.session.delete(movimentacao)
+
     db.session.delete(conta)
     db.session.commit()
-    return redirect(url_for('main.contas'))
+    flash('Despesa e movimentação excluídas com sucesso.', 'success')
+    return redirecionar_por_tipo()
+
+
+@bp.route('/deletar-usuario/<int:id>', methods=['POST'])
+@login_obrigatorio
+def deletar_usuario(id):
+    if session.get('tipo') != 'admin':
+        return redirect(url_for('main.dashboard'))
+
+    if id == session.get('usuario_id'):
+        flash('Você não pode excluir seu próprio usuário.', 'danger')
+        return redirect(url_for('main.cadastrar_usuario'))
+
+    usuario = Usuario.query.get_or_404(id)
+
+    # Verificar se o usuário tem movimentações
+    if Movimentacao.query.filter_by(usuario_id=id).first():
+        flash('Não é possível excluir: este usuário possui movimentações registradas.', 'danger')
+        return redirect(url_for('main.cadastrar_usuario'))
+
+    db.session.delete(usuario)
+    db.session.commit()
+    flash('Usuário excluído com sucesso!', 'success')
+    return redirect(url_for('main.cadastrar_usuario'))
+
+
+### Relatórios
 
 @bp.route('/relatorios', methods=['GET', 'POST'])
 @login_obrigatorio
@@ -348,6 +398,10 @@ def relatorios():
         ano=ano
     )
 
+
+
+### Exportação Excel
+
 @bp.route('/exportar-excel')
 @login_obrigatorio
 def exportar_excel():
@@ -372,6 +426,10 @@ def exportar_excel():
     output.seek(0)
     return send_file(output, download_name='movimentacoes.xlsx', as_attachment=True)
 
+
+
+### Edição de Movimentação
+
 @bp.route('/editar-movimentacao/<int:id>', methods=['GET', 'POST'])
 @login_obrigatorio
 def editar_movimentacao(id):
@@ -383,41 +441,16 @@ def editar_movimentacao(id):
         data_str = request.form['data']
         movimentacao.data = datetime.strptime(data_str, '%Y-%m-%d').date()
         db.session.commit()
-        return redirect(url_for('main.dashboard'))
+
+        if session.get('tipo') == 'vendedor':
+            return redirect(url_for('main.caixa'))
+        else:
+            return redirect(url_for('main.dashboard'))
+
     return render_template('editar_movimentacao.html', m=movimentacao)
 
-@bp.route('/contas', methods=['GET', 'POST'])
-@login_obrigatorio
-def contas():
-    if session.get('tipo') != 'admin':
-        return redirect(url_for('main.dashboard'))
 
-    if request.method == 'POST':
-        descricao = request.form['descricao']
-        valor = float(request.form['valor'])
-        vencimento = datetime.strptime(request.form['vencimento'], '%Y-%m-%d').date()
-        status = request.form['status']
-        tipo = request.form.get('tipo')  # ✔️ seguro
-
-        if not tipo:
-            flash('Erro: o campo "tipo" é obrigatório.', 'danger')
-            return redirect(url_for('main.contas'))
-
-        nova_conta = Conta(
-            descricao=descricao,
-            valor=valor,
-            vencimento=vencimento,
-            status=status,
-            tipo=tipo,
-            usuario_id=session['usuario_id']
-        )
-        db.session.add(nova_conta)
-        db.session.commit()
-        flash('Conta cadastrada com sucesso!', 'success')
-        return redirect(url_for('main.contas'))
-
-    contas = Conta.query.order_by(Conta.vencimento).all()
-    return render_template('contas.html', contas=contas)
+### Perfil do Usuário
 
 @bp.route('/perfil', methods=['GET', 'POST'])
 @login_obrigatorio
@@ -445,6 +478,10 @@ def perfil():
 
     return render_template('perfil.html', usuario=usuario)
 
+
+
+### Excluir Movimentação
+
 @bp.route('/movimentacoes/excluir/<int:id>', methods=['GET'])
 @login_obrigatorio
 def excluir_movimentacao(id):
@@ -458,45 +495,25 @@ def excluir_movimentacao(id):
     db.session.delete(movimentacao)
     db.session.commit()
     flash("Movimentação excluída com sucesso.", "success")
-    return redirect(url_for('main.dashboard'))
+    return redirecionar_por_tipo()
 
-@bp.route('/caixa', methods=['GET', 'POST'])
+
+@bp.route('/usuarios-logins')
 @login_obrigatorio
-def caixa():
-    if session.get('tipo') != 'vendedor':
+def usuarios_logins():
+    if session.get('tipo') != 'admin':
         return redirect(url_for('main.dashboard'))
 
-    usuario_id = session['usuario_id']
     hoje = date.today()
-    filtro_data = request.args.get('filtro_data') or hoje.strftime('%Y-%m-%d')
+    mes = request.args.get('mes', type=int) or hoje.month
+    ano = request.args.get('ano', type=int) or hoje.year
 
-    if request.method == 'POST':
-        categoria = request.form['categoria']
-        valor = float(request.form['valor'])
-        data = request.form['data']
-        data_formatada = datetime.strptime(data, '%Y-%m-%d').date()
+    usuarios = Usuario.query.filter(
+        Usuario.ultimo_acesso != None,
+        extract('month', Usuario.ultimo_acesso) == mes,
+        extract('year', Usuario.ultimo_acesso) == ano
+    ).order_by(Usuario.ultimo_acesso.desc()).all()
 
-        nova_venda = Movimentacao(
-            tipo='receita',
-            categoria=categoria,
-            valor=valor,
-            data=data_formatada,
-            usuario_id=usuario_id
-        )
-        db.session.add(nova_venda)
-        db.session.commit()
-        flash('Venda registrada com sucesso!', 'success')
-        return redirect(url_for('main.caixa'))
-
-    vendas = Movimentacao.query.filter_by(tipo='receita', usuario_id=usuario_id)
-    if filtro_data:
-        try:
-            data_filtrada = datetime.strptime(filtro_data, '%Y-%m-%d').date()
-            vendas = vendas.filter(Movimentacao.data == data_filtrada)
-        except ValueError:
-            flash('Data inválida para filtro.', 'danger')
-    vendas = vendas.order_by(Movimentacao.data.desc()).all()
-
-    return render_template('caixa.html', movimentacoes=vendas, filtro_data=filtro_data, hoje=hoje.strftime('%Y-%m-%d'))
+    return render_template("usuarios_logins.html", usuarios=usuarios, mes=mes, ano=ano)
 
 
