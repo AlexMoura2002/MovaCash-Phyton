@@ -91,30 +91,18 @@
             </div>
         </div>
     </div>
-
-    <div class="card shadow-sm border-0 mb-5">
-        <div class="card-body">
-            <h5 class="mb-3">Evolução Mensal - Receitas e Despesas</h5>
-            <canvas id="graficoEvolucao" height="100"></canvas>
-        </div>
-    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     const receitas = {{ receitas_json | safe }};
     const despesas = {{ despesas_json | safe }};
-    const evolucao = {{ evolucao_json | safe }};
 
     const receitasLabels = receitas.map(item => item[0]);
     const receitasData = receitas.map(item => item[1]);
 
     const despesasLabels = despesas.map(item => item[0]);
     const despesasData = despesas.map(item => item[1]);
-
-    const evolucaoLabels = evolucao.map(item => item.mes);
-    const evolucaoReceitas = evolucao.map(item => item.total_receitas);
-    const evolucaoDespesas = evolucao.map(item => item.total_despesas);
 
     new Chart(document.getElementById('graficoReceitas'), {
         type: 'pie',
@@ -124,18 +112,6 @@
     new Chart(document.getElementById('graficoDespesas'), {
         type: 'pie',
         data: { labels: despesasLabels, datasets: [{ label: 'Despesas', data: despesasData, borderWidth: 1 }] }
-    });
-
-    new Chart(document.getElementById('graficoEvolucao'), {
-        type: 'line',
-        data: {
-            labels: evolucaoLabels,
-            datasets: [
-                { label: 'Receitas', data: evolucaoReceitas, borderColor: 'green', backgroundColor: 'rgba(0, 128, 0, 0.1)', fill: true, tension: 0.3 },
-                { label: 'Despesas', data: evolucaoDespesas, borderColor: 'red', backgroundColor: 'rgba(255, 0, 0, 0.1)', fill: true, tension: 0.3 }
-            ]
-        },
-        options: { responsive: true, scales: { y: { beginAtZero: true } } }
     });
 </script>
 {% endblock %}
