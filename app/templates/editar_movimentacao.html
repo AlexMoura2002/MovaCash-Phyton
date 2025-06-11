@@ -1,45 +1,56 @@
 {% extends 'base.html' %}
 
-{% block title %}Editar Conta{% endblock %}
+{% block title %}Editar Conta - Movacash{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2>Editar Conta</h2>
-    <form method="POST">
-        <div class="mb-3">
-            <label for="descricao" class="form-label">Descrição</label>
-            <input type="text" class="form-control" id="descricao" name="descricao" value="{{ conta.descricao }}" required>
-        </div>
+<div class="container mt-5">
 
-        <div class="mb-3">
-            <label for="valor" class="form-label">Valor</label>
-            <input type="number" class="form-control" id="valor" name="valor" step="0.01" value="{{ conta.valor }}" required>
-        </div>
+    <h2 class="mb-4 text-center text-dark">📝 Editar Conta</h2>
 
-        <div class="mb-3">
-            <label for="vencimento" class="form-label">Data de Vencimento</label>
-            <input type="date" class="form-control" id="vencimento" name="vencimento" value="{{ conta.vencimento }}" required>
-        </div>
+    <div class="card shadow-sm p-4 border-0 rounded">
 
-        <div class="mb-3">
-            <label for="tipo" class="form-label">Tipo</label>
-            <select class="form-select" id="tipo" name="tipo" required>
-                <option value="pagar" {% if conta.tipo == 'pagar' %}selected{% endif %}>Conta a Pagar</option>
-                <option value="receber" {% if conta.tipo == 'receber' %}selected{% endif %}>Conta a Receber</option>
-            </select>
-        </div>
+        <form method="POST">
 
-        <div class="mb-3">
-            <label for="status" class="form-label">Status</label>
-            <select class="form-select" id="status" name="status" required>
-                <option value="pendente" {% if conta.status == 'pendente' %}selected{% endif %}>Pendente</option>
-                <option value="paga" {% if conta.status == 'paga' %}selected{% endif %}>Paga</option>
-                <option value="recebida" {% if conta.status == 'recebida' %}selected{% endif %}>Recebida</option>
-            </select>
-        </div>
+            <div class="mb-3">
+                <label for="descricao" class="form-label fw-bold">Descrição</label>
+                <input type="text" class="form-control" id="descricao" name="descricao" value="{{ conta.descricao }}" required>
+            </div>
 
-        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
-        <a href="{{ url_for('main.contas') }}" class="btn btn-secondary">Cancelar</a>
-    </form>
+            <div class="mb-3">
+                <label for="valor" class="form-label fw-bold">Valor</label>
+                <input type="number" class="form-control" id="valor" name="valor" step="0.01" value="{{ conta.valor }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="vencimento" class="form-label fw-bold">Data de Vencimento</label>
+                <input type="date" class="form-control" id="vencimento" name="vencimento" value="{{ conta.vencimento }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="tipo" class="form-label fw-bold">Tipo</label>
+                <select class="form-select" id="tipo" name="tipo" required>
+                    <option value="pagar" {% if conta.tipo == 'pagar' %}selected{% endif %}>Conta a Pagar</option>
+                    <option value="receber" {% if conta.tipo == 'receber' %}selected{% endif %}>Conta a Receber</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="status" class="form-label fw-bold">Status</label>
+                <select class="form-select" id="status" name="status" required>
+                    <option value="pendente" {% if conta.status == 'pendente' %}selected{% endif %}>Pendente</option>
+                    <option value="paga" {% if conta.status == 'paga' %}selected{% endif %}>Paga</option>
+                    <option value="recebida" {% if conta.status == 'recebida' %}selected{% endif %}>Recebida</option>
+                </select>
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <button type="submit" class="btn btn-success px-4">Salvar</button>
+                <a href="{{ url_for('main.contas') }}" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+
+        </form>
+
+    </div>
+
 </div>
 {% endblock %}

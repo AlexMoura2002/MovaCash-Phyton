@@ -3,13 +3,15 @@
 {% block title %}Caixa - Movacash{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2 class="mb-4">Registrar Venda</h2>
+<div class="container mt-5">
 
+    <h2 class="mb-5 text-center text-dark">🧾 Registrar Venda</h2>
+
+    <!-- Mensagens Flash -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
                     {{ message }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
                 </div>
@@ -17,59 +19,54 @@
         {% endif %}
     {% endwith %}
 
-    <div class="card mb-4">
-        <div class="card-body">
-            <form method="POST">
-                <div class="mb-3">
-                    <label class="form-label">Produto vendido:</label>
-                    <input type="text" name="categoria" class="form-control" placeholder="Ex: Camiseta, Calça" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Valor:</label>
-                    <input type="number" name="valor" step="0.01" class="form-control" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Data:</label>
-                    <input type="date" name="data" class="form-control" value="{{ hoje }}">
-                </div>
-                <button type="submit" class="btn btn-primary">Registrar Venda</button>
-            </form>
-        </div>
+    <!-- Formulário de Venda -->
+    <div class="card mb-4 shadow-sm border-0 p-4 rounded">
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label fw-bold">Produto vendido:</label>
+                <input type="text" name="categoria" class="form-control" placeholder="Ex: Camiseta, Calça" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold">Valor:</label>
+                <input type="number" name="valor" step="0.01" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold">Data:</label>
+                <input type="date" name="data" class="form-control" value="{{ hoje }}" required>
+            </div>
+            <button type="submit" class="btn btn-success w-100">Registrar Venda</button>
+        </form>
     </div>
 
-    <div class="card mb-3">
-        <div class="card-body">
-            <form method="GET">
-                <h5 class="card-title">Filtrar Vendas por Data</h5>
-                <div class="row g-3 align-items-center">
-                    <div class="col-auto">
-                        <label class="col-form-label">Data:</label>
-                    </div>
-                    <div class="col-auto">
-                        <input type="date" name="filtro_data" class="form-control" value="{{ filtro_data }}">
-                    </div>
-                    <div class="col-auto">
-                        <button type="submit" class="btn btn-secondary">Filtrar</button>
-                    </div>
+    <!-- Filtro de Data -->
+    <div class="card mb-5 shadow-sm border-0 p-3 rounded">
+        <form method="GET">
+            <h5 class="card-title mb-3 fw-bold">Filtrar Vendas por Data</h5>
+            <div class="row g-3">
+                <div class="col-auto">
+                    <input type="date" name="filtro_data" class="form-control" value="{{ filtro_data }}">
                 </div>
-            </form>
-        </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-outline-success px-4">Filtrar</button>
+                </div>
+            </div>
+        </form>
     </div>
 
-    <div class="card">
+    <!-- Listagem de Vendas -->
+    <div class="card shadow-sm border-0 rounded">
         <div class="card-body">
-            <h5 class="card-title">Vendas</h5>
+            <h5 class="card-title mb-4">Vendas Registradas</h5>
             {% if movimentacoes %}
                 <ul class="list-group">
                     {% for v in movimentacoes %}
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             <div>
-                                {{ v.data.strftime('%d/%m/%Y') }} - {{ v.categoria }} - R$ {{ "%.2f"|format(v.valor) }}
+                                {{ v.data.strftime('%d/%m/%Y') }} - {{ v.categoria }} - <strong>R$ {{ "%.2f"|format(v.valor) }}</strong>
                             </div>
                             <div>
-                                <a href="{{ url_for('main.editar_movimentacao', id=v.id) }}" class="btn btn-sm btn-warning">Editar</a>
-                                <a href="{{ url_for('main.excluir_movimentacao', id=v.id) }}"
-                                   class="btn btn-sm btn-danger"
+                                <a href="{{ url_for('main.editar_movimentacao', id=v.id) }}" class="btn btn-sm btn-warning me-2 shadow-sm">Editar</a>
+                                <a href="{{ url_for('main.excluir_movimentacao', id=v.id) }}" class="btn btn-sm btn-danger shadow-sm"
                                    onclick="return confirm('Deseja excluir esta venda?');">Excluir</a>
                             </div>
                         </li>
@@ -80,5 +77,6 @@
             {% endif %}
         </div>
     </div>
+
 </div>
 {% endblock %}

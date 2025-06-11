@@ -16,6 +16,7 @@ def home():
 
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
+    erro = None  # Adiciona variável de erro
     if request.method == 'POST':
         email = request.form.get('email')
         senha = request.form.get('senha')
@@ -30,8 +31,11 @@ def login():
                 return redirect(url_for('main.dashboard'))
             else:
                 return redirect(url_for('main.caixa'))
-        flash('Credenciais inválidas', 'danger')
-    return render_template('login.html')
+        else:
+            erro = "Email ou senha incorretos."  # Mensagem de erro
+
+    return render_template('login.html', erro=erro)
+
 
 @bp.route('/usuarios-logins')
 @login_obrigatorio
@@ -494,3 +498,5 @@ def caixa():
     vendas = vendas.order_by(Movimentacao.data.desc()).all()
 
     return render_template('caixa.html', movimentacoes=vendas, filtro_data=filtro_data, hoje=hoje.strftime('%Y-%m-%d'))
+
+

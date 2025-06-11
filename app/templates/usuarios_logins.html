@@ -1,53 +1,66 @@
 {% extends 'base.html' %}
 
-{% block title %}Últimos Acessos{% endblock %}
+{% block title %}Últimos Acessos - Movacash{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">📋 Últimos acessos dos usuários</h2>
+<div class="container mt-5">
 
-<!-- Filtro por mês e ano -->
-<form method="get" class="row g-2 mb-3">
-    <div class="col-auto">
-        <label for="mes" class="form-label">Mês:</label>
-        <select name="mes" id="mes" class="form-select">
-            {% for m in range(1, 13) %}
-                <option value="{{ m }}" {% if m == mes %}selected{% endif %}>{{ m }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="col-auto">
-        <label for="ano" class="form-label">Ano:</label>
-        <input type="number" name="ano" id="ano" value="{{ ano }}" class="form-control">
-    </div>
-    <div class="col-auto align-self-end">
-        <button type="submit" class="btn btn-primary">Filtrar</button>
-    </div>
-</form>
+    <h2 class="mb-4 text-center text-dark">📋 Últimos Acessos dos Usuários</h2>
 
-<table class="table table-bordered table-striped">
-    <thead>
-        <tr>
-            <th>Nome</th>
-            <th>Email</th>
-            <th>Tipo</th>
-            <th>Último Acesso</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for u in usuarios %}
-        <tr>
-            <td>{{ u.nome }}</td>
-            <td>{{ u.email }}</td>
-            <td>{{ u.tipo }}</td>
-            <td>
-                {% if u.ultimo_acesso %}
-                    {{ u.ultimo_acesso.strftime('%d/%m/%Y %H:%M:%S') }}
-                {% else %}
-                    Nunca acessou
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+    <!-- Filtro de mês e ano -->
+    <form method="get" class="row g-3 mb-5 bg-white p-3 shadow-sm rounded">
+        <div class="col-md-3">
+            <label class="form-label">Mês:</label>
+            <select name="mes" class="form-select">
+                {% for m in range(1, 13) %}
+                    <option value="{{ m }}" {% if m == mes %}selected{% endif %}>{{ m }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Ano:</label>
+            <input type="number" name="ano" value="{{ ano }}" class="form-control">
+        </div>
+        <div class="col-md-3 align-self-end">
+            <button type="submit" class="btn btn-success px-4">Filtrar</button>
+        </div>
+    </form>
+
+    <!-- Tabela de acessos -->
+    <div class="card shadow-sm border-0 rounded">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nome</th>
+                        <th>Email</th>
+                        <th>Tipo</th>
+                        <th>Último Acesso</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in usuarios %}
+                    <tr>
+                        <td>{{ u.nome }}</td>
+                        <td>{{ u.email }}</td>
+                        <td>{{ u.tipo|capitalize }}</td>
+                        <td>
+                            {% if u.ultimo_acesso %}
+                                {{ u.ultimo_acesso.strftime('%d/%m/%Y %H:%M:%S') }}
+                            {% else %}
+                                <span class="text-muted">Nunca acessou</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-3">Nenhum acesso encontrado para o período.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
 {% endblock %}

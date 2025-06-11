@@ -3,89 +3,93 @@
 {% block title %}Contas a Pagar e Receber - Movacash{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">Contas a Pagar e Receber</h2>
+<div class="container mt-5">
 
-<!-- Mensagens Flash -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    {% for category, message in messages %}
-      <div class="alert alert-{{ category }} alert-dismissible fade show mt-3" role="alert">
-        {{ message }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
-      </div>
-    {% endfor %}
-  {% endif %}
-{% endwith %}
+    <h2 class="mb-4 text-center text-dark">Contas a Pagar e Receber</h2>
 
-<!-- Cadastro de Nova Conta -->
-<div class="card mb-4">
-  <div class="card-body">
-    <h5 class="card-title">Cadastrar Nova Conta</h5>
-    <form method="POST" novalidate>
-      <div class="row">
-        <div class="col-md-4 mb-3">
-          <label for="descricao" class="form-label">Descrição</label>
-          <input type="text" class="form-control" id="descricao" name="descricao" required>
-        </div>
-        <div class="col-md-2 mb-3">
-          <label for="valor" class="form-label">Valor</label>
-          <input type="number" class="form-control" id="valor" name="valor" step="0.01" required>
-        </div>
-        <div class="col-md-3 mb-3">
-          <label for="vencimento" class="form-label">Vencimento</label>
-          <input type="date" class="form-control" id="vencimento" name="vencimento" required>
-        </div>
-        <div class="col-md-2 mb-3">
-          <label for="status" class="form-label">Status</label>
-          <select class="form-select" id="status" name="status" required>
-            <option value="" disabled selected>Selecione</option>
-            <option value="pendente">Pendente</option>
-            <option value="paga">Paga</option>
-          </select>
-        </div>
-        <div class="col-md-2 mb-3">
-          <label for="tipo" class="form-label">Tipo</label>
-          <select class="form-select" id="tipo" name="tipo" required>
-            <option value="" disabled selected>Selecione</option>
-            <option value="pagar">Pagar</option>
-            <option value="receber">Receber</option>
-          </select>
-        </div>
-      </div>
-      <button type="submit" class="btn btn-success">Cadastrar Conta</button>
-    </form>
-  </div>
-</div>
-
-<!-- Lista de Contas -->
-<div class="card">
-  <div class="card-body">
-    <h5 class="card-title">Lista de Contas</h5>
-    {% if contas %}
-      <ul class="list-group">
-        {% for conta in contas %}
-          <li class="list-group-item d-flex justify-content-between align-items-center">
-            <div>
-              {{ conta.vencimento.strftime('%d/%m/%Y') }} - 
-              {{ conta.descricao }} - 
-              R$ {{ "%.2f"|format(conta.valor) }} - 
-              <strong>{{ conta.status|capitalize }}</strong> - 
-              <em>{{ conta.tipo|capitalize }}</em>
-            </div>
-            <div>
-              <a href="{{ url_for('main.editar_conta', id=conta.id) }}" class="btn btn-sm btn-warning">Editar</a>
-              <a href="{{ url_for('main.excluir_conta', id=conta.id) }}"
-                 class="btn btn-sm btn-danger"
-                 onclick="return confirm('Tem certeza que deseja excluir esta conta?');">
-                 Excluir
-              </a>
-            </div>
-          </li>
+    <!-- Mensagens Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+          </div>
         {% endfor %}
-      </ul>
-    {% else %}
-      <p class="text-muted">Nenhuma conta cadastrada.</p>
-    {% endif %}
-  </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Cadastro de Nova Conta -->
+    <div class="card shadow-sm mb-5">
+        <div class="card-body">
+            <h5 class="card-title mb-3">Cadastrar Nova Conta</h5>
+            <form method="POST" novalidate>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Descrição:</label>
+                        <input type="text" name="descricao" class="form-control" required>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label class="form-label">Valor:</label>
+                        <input type="number" name="valor" step="0.01" class="form-control" required>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Vencimento:</label>
+                        <input type="date" name="vencimento" class="form-control" required>
+                    </div>
+                    <div class="col-md-1 mb-3">
+                        <label class="form-label">Status:</label>
+                        <select name="status" class="form-select" required>
+                            <option value="pendente">Pendente</option>
+                            <option value="paga">Paga</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label class="form-label">Tipo:</label>
+                        <select name="tipo" class="form-select" required>
+                            <option value="pagar">Pagar</option>
+                            <option value="receber">Receber</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success w-100">Cadastrar Conta</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lista de Contas -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title mb-3">Lista de Contas</h5>
+
+            {% if contas %}
+                <ul class="list-group">
+                    {% for conta in contas %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                {{ conta.vencimento.strftime('%d/%m/%Y') }} -
+                                {{ conta.descricao }} -
+                                R$ {{ "%.2f"|format(conta.valor) }} -
+                                <strong>{{ conta.status|capitalize }}</strong> -
+                                <em>{{ conta.tipo|capitalize }}</em>
+                            </div>
+                            <div class="d-flex">
+                                <a href="{{ url_for('main.editar_conta', id=conta.id) }}" 
+                                   class="btn btn-sm btn-warning me-2 text-white fw-bold">Editar</a>
+                                <a href="{{ url_for('main.excluir_conta', id=conta.id) }}" 
+                                   class="btn btn-sm btn-danger fw-bold"
+                                   onclick="return confirm('Tem certeza que deseja excluir esta conta?');">
+                                   Excluir
+                                </a>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted">Nenhuma conta cadastrada.</p>
+            {% endif %}
+        </div>
+    </div>
+
 </div>
 {% endblock %}

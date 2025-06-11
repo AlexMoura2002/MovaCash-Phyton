@@ -3,8 +3,9 @@
 {% block title %}Dashboard - Movacash{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2 class="mb-4">Bem-vindo, {{ usuario }}!</h2>
+<div class="container mt-5">
+
+    <h2 class="mb-5 text-center text-dark">Bem-vindo, {{ usuario }}!</h2>
 
     <!-- Alertas (flash messages) -->
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -18,11 +19,10 @@
       {% endif %}
     {% endwith %}
 
-    <!-- Aviso: Contas a pagar nos próximos 3 dias -->
     {% if contas_proximas %}
-      <div class="alert alert-warning">
+      <div class="alert alert-warning shadow-sm rounded">
         <strong>Atenção:</strong> Você tem {{ contas_proximas|length }} conta(s) a vencer nos próximos 3 dias:
-        <ul>
+        <ul class="mt-2">
             {% for c in contas_proximas %}
                 <li>{{ c.descricao }} - vence em {{ c.vencimento.strftime('%d/%m/%Y') }} - R$ {{ "%.2f"|format(c.valor) }}</li>
             {% endfor %}
@@ -31,7 +31,7 @@
     {% endif %}
 
     <!-- Filtro por Mês e Ano -->
-    <form method="GET" class="row g-3 mb-4 align-items-end">
+    <form method="GET" class="row g-3 mb-4 align-items-end bg-white p-3 rounded shadow-sm">
         <div class="col-auto">
             <label class="form-label">Mês:</label>
             <select name="mes" class="form-select">
@@ -45,41 +45,41 @@
             <input type="number" name="ano" class="form-control" value="{{ ano }}">
         </div>
         <div class="col-auto">
-            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <button type="submit" class="btn btn-success px-4">Filtrar</button>
         </div>
     </form>
 
     <!-- Resumo Financeiro -->
-    <h4 class="mb-3">📊 Resumo Financeiro de {{ mes }}/{{ ano }}</h4>
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card text-bg-success shadow">
+    <h4 class="mb-4 text-dark">📊 Resumo Financeiro de {{ mes }}/{{ ano }}</h4>
+    <div class="row mb-5">
+        <div class="col-md-4 mb-3">
+            <div class="card shadow border-0 rounded-xl" style="background-color: #1abc9c; color: white;">
                 <div class="card-body">
                     <h5 class="card-title">Receitas</h5>
-                    <p class="card-text fs-4">R$ {{ total_receitas | default(0) | round(2) }}</p>
+                    <p class="card-text fs-3">R$ {{ total_receitas | default(0) | round(2) }}</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card text-bg-danger shadow">
+        <div class="col-md-4 mb-3">
+            <div class="card shadow border-0 rounded-xl" style="background-color: #e74c3c; color: white;">
                 <div class="card-body">
                     <h5 class="card-title">Despesas</h5>
-                    <p class="card-text fs-4">R$ {{ total_despesas | default(0) | round(2) }}</p>
+                    <p class="card-text fs-3">R$ {{ total_despesas | default(0) | round(2) }}</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card text-bg-primary shadow">
+        <div class="col-md-4 mb-3">
+            <div class="card shadow border-0 rounded-xl" style="background-color: #16a085; color: white;">
                 <div class="card-body">
                     <h5 class="card-title">Saldo</h5>
-                    <p class="card-text fs-4">R$ {{ saldo | default(0) | round(2) }}</p>
+                    <p class="card-text fs-3">R$ {{ saldo | default(0) | round(2) }}</p>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Filtro por Data Específica -->
-    <div class="card mb-4">
+    <div class="card mb-5 shadow-sm rounded border-0">
         <div class="card-body">
             <form method="GET" class="row g-3 align-items-end">
                 <div class="col-auto">
@@ -87,34 +87,35 @@
                     <input type="date" name="filtro_data" class="form-control" value="{{ filtro_data }}">
                 </div>
                 <div class="col-auto">
-                    <button type="submit" class="btn btn-secondary">Filtrar</button>
+                    <button type="submit" class="btn btn-outline-success">Filtrar</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- Lista de Movimentações -->
-    <div class="card">
+    <div class="card shadow-sm border-0 rounded-xl">
         <div class="card-body">
-            <h5 class="card-title">Movimentações</h5>
+            <h5 class="card-title mb-4">Movimentações</h5>
             {% if movimentacoes %}
                 <ul class="list-group">
                     {% for tipo, categoria, valor, data, id, dono in movimentacoes %}
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             <div>
-                                {{ data.strftime('%d/%m/%Y') }} - {{ tipo }} - {{ categoria }} - R$ {{ "%.2f"|format(valor) }}
+                                {{ data.strftime('%d/%m/%Y') }} - {{ tipo }} - {{ categoria }} - 
+                                <strong>R$ {{ "%.2f"|format(valor) }}</strong>
                                 {% if dono %}
                                     <br><small class="text-muted">Usuário: {{ dono }}</small>
                                 {% endif %}
                             </div>
-                            <span>
-                                <a href="{{ url_for('main.editar_movimentacao', id=id) }}" class="btn btn-sm btn-warning">Editar</a>
-                                <a href="{{ url_for('main.excluir_movimentacao', id=id) }}"
-                                   class="btn btn-sm btn-danger"
+                            <div class="d-flex">
+                                <a href="{{ url_for('main.editar_movimentacao', id=id) }}" class="btn btn-warning btn-sm me-2 text-white">Editar</a>
+                                <a href="{{ url_for('main.excluir_movimentacao', id=id) }}" 
+                                   class="btn btn-danger btn-sm"
                                    onclick="return confirm('Tem certeza que deseja excluir esta movimentação?');">
                                     Excluir
                                 </a>
-                            </span>
+                            </div>
                         </li>
                     {% endfor %}
                 </ul>
@@ -123,5 +124,6 @@
             {% endif %}
         </div>
     </div>
+
 </div>
 {% endblock %}

@@ -1,64 +1,77 @@
 {% extends 'base.html' %}
 
-{% block title %}Cadastrar Usuário{% endblock %}
+{% block title %}Cadastrar Usuário - Movacash{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2>👥 Cadastrar Novo Usuário</h2>
+<div class="container mt-5">
 
-    <form method="POST">
-        <div class="mb-3">
-            <label class="form-label">Nome:</label>
-            <input type="text" class="form-control" name="nome" required>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">E-mail:</label>
-            <input type="email" class="form-control" name="email" required>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Senha:</label>
-            <input type="password" class="form-control" name="senha" required>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Tipo:</label>
-            <select name="tipo" class="form-select" required>
-                <option value="vendedor">Vendedor</option>
-                <option value="admin">Administrador</option>
-            </select>
-        </div>
-        <button type="submit" class="btn btn-success">Cadastrar</button>
-    </form>
+    <h2 class="mb-4 text-center text-dark">👥 Cadastrar Novo Usuário</h2>
 
-    <hr>
+    <!-- Formulário de cadastro -->
+    <div class="card shadow-sm border-0 rounded p-4 mb-5">
+        <form method="POST">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Nome:</label>
+                    <input type="text" class="form-control" name="nome" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">E-mail:</label>
+                    <input type="email" class="form-control" name="email" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Senha:</label>
+                    <input type="password" class="form-control" name="senha" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Tipo:</label>
+                    <select name="tipo" class="form-select" required>
+                        <option value="vendedor">Vendedor</option>
+                        <option value="admin">Administrador</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-4 text-end">
+                <button type="submit" class="btn btn-success px-4">Cadastrar</button>
+            </div>
+        </form>
+    </div>
 
-    <h3>📄 Usuários Cadastrados</h3>
+    <!-- Lista de usuários -->
+    <h3 class="mb-3 text-dark">📄 Usuários Cadastrados</h3>
+
     {% if usuarios %}
-        <table class="table table-bordered table-hover mt-3">
-            <thead class="table-light">
-                <tr>
-                    <th>Nome</th>
-                    <th>Email</th>
-                    <th>Tipo</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for u in usuarios %}
-                    <tr>
-                        <td>{{ u.nome }}</td>
-                        <td>{{ u.email }}</td>
-                        <td>{{ u.tipo|capitalize }}</td>
-                        <td>
-                            <form action="{{ url_for('main.deletar_usuario', id=u.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Deseja realmente excluir este usuário?');">
-                                <button type="submit" class="btn btn-sm btn-danger">Excluir</button>
-                            </form>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="card shadow-sm border-0 rounded">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Tipo</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in usuarios %}
+                            <tr>
+                                <td>{{ u.nome }}</td>
+                                <td>{{ u.email }}</td>
+                                <td>{{ u.tipo|capitalize }}</td>
+                                <td class="text-center">
+                                    <form action="{{ url_for('main.deletar_usuario', id=u.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Deseja realmente excluir este usuário?');">
+                                        <button type="submit" class="btn btn-sm btn-danger px-3">Excluir</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     {% else %}
         <p class="text-muted">Nenhum usuário cadastrado ainda.</p>
     {% endif %}
+
 </div>
 {% endblock %}
