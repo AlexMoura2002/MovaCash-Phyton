@@ -4,36 +4,42 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2 class="mb-4">Cadastro de Usuário</h2>
 
-    <form method="POST" class="card p-4 shadow-sm mb-4">
+    <h2 class="mb-4 text-center text-dark">👥 Cadastrar Novo Usuário</h2>
+
+    <form method="POST" class="card p-4 shadow-sm mb-5 border-0">
         <div class="mb-3">
-            <label for="nome" class="form-label">Nome</label>
+            <label for="nome" class="form-label fw-bold">Nome</label>
             <input type="text" class="form-control" id="nome" name="nome" required>
         </div>
 
         <div class="mb-3">
-            <label for="email" class="form-label">E-mail</label>
+            <label for="email" class="form-label fw-bold">E-mail</label>
             <input type="email" class="form-control" id="email" name="email" required>
         </div>
 
         <div class="mb-3">
-            <label for="senha" class="form-label">Senha</label>
-            <input type="password" class="form-control" id="senha" name="senha" required>
+            <label for="senha" class="form-label fw-bold">Senha</label>
+            <div class="input-group">
+                <input type="password" class="form-control" id="senha" name="senha" required>
+                <span class="input-group-text bg-white">
+                    <i class="bi bi-eye-fill password-toggle" onclick="togglePassword()" style="cursor:pointer;"></i>
+                </span>
+            </div>
         </div>
 
         <div class="mb-3">
-            <label for="tipo" class="form-label">Tipo de Usuário</label>
+            <label for="tipo" class="form-label fw-bold">Tipo de Usuário</label>
             <select class="form-select" id="tipo" name="tipo" required>
                 <option value="vendedor">Vendedor</option>
                 <option value="admin">Administrador</option>
             </select>
         </div>
 
-        <button type="submit" class="btn btn-success px-4">Cadastrar</button>
+        <button type="submit" class="btn btn-success w-100">Cadastrar</button>
     </form>
 
-    <h3 class="mb-3">Usuários Cadastrados</h3>
+    <h3 class="mb-3 text-center text-dark">📄 Usuários Cadastrados</h3>
 
     {% if usuarios %}
     <div class="table-responsive">
@@ -43,7 +49,7 @@
                     <th>Nome</th>
                     <th>Email</th>
                     <th>Tipo</th>
-                    <th>Ações</th>
+                    <th class="text-center">Ações</th>
                 </tr>
             </thead>
             <tbody>
@@ -52,7 +58,7 @@
                     <td>{{ usuario.nome }}</td>
                     <td>{{ usuario.email }}</td>
                     <td>{{ usuario.tipo }}</td>
-                    <td>
+                    <td class="text-center">
                         <form action="{{ url_for('main.deletar_usuario', id=usuario.id) }}" method="post" class="d-inline" onsubmit="return confirm('Deseja realmente excluir este usuário?');">
                             <button type="submit" class="btn btn-danger btn-sm">Excluir</button>
                         </form>
@@ -63,7 +69,24 @@
         </table>
     </div>
     {% else %}
-    <p class="text-muted">Nenhum usuário cadastrado ainda.</p>
+    <p class="text-muted text-center">Nenhum usuário cadastrado ainda.</p>
     {% endif %}
 </div>
+
+<script>
+    function togglePassword() {
+        const senhaInput = document.getElementById("senha");
+        const icon = document.querySelector(".password-toggle");
+        if (senhaInput.type === "password") {
+            senhaInput.type = "text";
+            icon.classList.remove("bi-eye-fill");
+            icon.classList.add("bi-eye-slash-fill");
+        } else {
+            senhaInput.type = "password";
+            icon.classList.remove("bi-eye-slash-fill");
+            icon.classList.add("bi-eye-fill");
+        }
+    }
+</script>
+
 {% endblock %}

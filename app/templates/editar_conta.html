@@ -3,26 +3,29 @@
 {% block title %}Editar Despesa{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2 class="mb-4">Editar Despesa</h2>
-    <form method="POST" class="card p-4 shadow-sm">
+<div class="container mt-5">
+
+    <h2 class="mb-4 text-center text-dark">📝 Editar Despesa</h2>
+
+    <form method="POST" class="card p-4 shadow-sm border-0">
+
         <div class="mb-3">
-            <label for="descricao" class="form-label">Descrição</label>
+            <label for="descricao" class="form-label fw-bold">Descrição</label>
             <input type="text" class="form-control" id="descricao" name="descricao" value="{{ conta.descricao }}" required>
         </div>
 
         <div class="mb-3">
-            <label for="valor" class="form-label">Valor (R$)</label>
+            <label for="valor" class="form-label fw-bold">Valor (R$)</label>
             <input type="number" class="form-control" id="valor" name="valor" step="0.01" value="{{ conta.valor }}" required>
         </div>
 
         <div class="mb-3">
-            <label for="vencimento" class="form-label">Data de Vencimento</label>
+            <label for="vencimento" class="form-label fw-bold">Data de Vencimento</label>
             <input type="date" class="form-control" id="vencimento" name="vencimento" value="{{ conta.vencimento }}" required>
         </div>
 
         <div class="mb-3">
-            <label for="status" class="form-label">Status</label>
+            <label for="status" class="form-label fw-bold">Status</label>
             <select class="form-select" id="status" name="status" required>
                 <option value="pendente" {% if conta.status == 'pendente' %}selected{% endif %}>Pendente</option>
                 <option value="paga" {% if conta.status == 'paga' %}selected{% endif %}>Paga</option>
@@ -30,9 +33,11 @@
         </div>
 
         <div class="d-flex justify-content-between">
-            <button type="submit" class="btn btn-success px-4">Salvar Alterações</button>
-            <a href="{{ url_for('main.contas') }}" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-success px-5">Salvar</button>
+            <a href="{{ url_for('main.contas') }}" class="btn btn-outline-secondary">Cancelar</a>
         </div>
+
     </form>
+
 </div>
 {% endblock %}
